@@ -13,6 +13,7 @@
  * 
  * Deployed Contract: 0x468edc5b2fe9d1c919f2377cbe0ccb16f32ead29
  */
+import { useState } from 'react'
 import FileUpload from '../components/FileUpload'
 import HashDisplay from '../components/HashDisplay'
 import SearchResults from '../components/SearchResults'
@@ -40,6 +41,41 @@ export default function VerifyPage() {
     verBlockchainRecord: blockchainRecord, setVerBlockchainRecord: setBlockchainRecord,
     verDbResults: dbResults, setVerDbResults: setDbResults,
   } = useUpload()
+
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
+  const [heatmapBase64, setHeatmapBase64] = useState(null)
+  const [heatmapError, setHeatmapError] = useState(null)
+
+  // Reset heatmap whenever a new file is uploaded
+  const resetHeatmap = () => { setHeatmapBase64(null); setHeatmapError(null) }
+
+  // Best match to use for heatmap (pick the first one that has a media URL)
+  const bestMatch = dbResults?.find(r => r.mediaS3Url || r.mediaIpfsUrl) || dbResults?.[0] || null
+  const originalUrl = bestMatch?.mediaS3Url || bestMatch?.mediaIpfsUrl || null
+
+  const handleGenerateHeatmap = async () => {
+    if (!file || !originalUrl) return
+    setHeatmapLoading(true)
+    setHeatmapError(null)
+    try {
+      const resOrig = await fetch(originalUrl)
+      const origBlob = await resOrig.blob()
+      const fd = new FormData()
+      fd.append('file1', origBlob, 'original.jpg')
+      fd.append('file2', file)
+      const compareRes = await fetch(`https://api.hash.veritrace.dpkvtrading.online/api/v1/compare`, { method: 'POST', body: fd })
+      if (compareRes.ok) {
+        const data = await compareRes.json()
+        setHeatmapBase64(data.heatmap_base64)
+      } else {
+        setHeatmapError('Heatmap generation failed. Make sure the AI service is running.')
+      }
+    } catch (err) {
+      setHeatmapError(`Failed: ${err.message}`)
+    } finally {
+      setHeatmapLoading(false)
+    }
+  }
 
   /**
    * computeLocalSHA256 — Uses the Web Crypto API to generate a SHA-256 hash.
@@ -69,7 +105,7 @@ export default function VerifyPage() {
         functionName: 'verifyContent',
         args: [bytes32Hash],
       })
-      
+
       return {
         isRegistered: true,
         creator: record[0],
@@ -95,6 +131,7 @@ export default function VerifyPage() {
     setPhash(null)
     setBlockchainRecord(null)
     setDbResults(null)
+    resetHeatmap()
     setUploadProgress(0)
 
     if (!f) return
@@ -147,7 +184,7 @@ export default function VerifyPage() {
         })
 
         xhr.addEventListener('error', () => reject(new Error('Verification upload failed due to network error')))
-        
+
         xhr.open('POST', `${HASH_ENGINE_API}/api/v1/hash`)
         xhr.send(formData)
       })
@@ -216,12 +253,12 @@ export default function VerifyPage() {
                   try {
                     const controller = new AbortController()
                     const timeoutId = setTimeout(() => controller.abort(), 3000) // 3 seconds timeout
-                    
+
                     const metaRes = await fetch(`https://gateway.pinata.cloud/ipfs/${registeredIpfs}`, {
                       signal: controller.signal
                     })
                     clearTimeout(timeoutId)
-                    
+
                     if (metaRes.ok) {
                       const metaData = await metaRes.json()
                       mediaS3Url = metaData.media_s3_url
@@ -279,7 +316,7 @@ export default function VerifyPage() {
           if (exactData.match_found && exactData.record) {
             // Only add if not already in matches list
             const alreadyMatched = matches.some(m => m.assetId.toLowerCase().includes(sha256Hex.slice(0, 8).toLowerCase()))
-            
+
             if (onChainData) {
               setBlockchainRecord(prev => ({
                 ...prev,
@@ -335,7 +372,7 @@ export default function VerifyPage() {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              sha256: sha256Bytes32,
+              sha256: '0x' + sha256Hex,
               media_type: hashData.media_type,
               segments: segmentsPayload,
             }),
@@ -344,22 +381,29 @@ export default function VerifyPage() {
           if (segmentRes.ok) {
             const segmentData = await segmentRes.json();
             if (segmentData.match_found && segmentData.record) {
-              const alreadyMatched = matches.some(m => m.assetId.toLowerCase().includes(segmentData.record.Sha256Hash?.slice(0, 8).toLowerCase()));
-              if (!alreadyMatched) {
-                matches.push({
-                  matchType: segmentData.is_deepfake ? 'deepfake' : 'similar',
-                  isDeepfake: segmentData.is_deepfake,
-                  similarity: segmentData.similarity || 90,
-                  assetId: segmentData.record.Sha256Hash?.slice(0, 16),
-                  sha256: segmentData.record.Sha256Hash,
-                  mediaType: hashData.media_type || 'unknown',
-                  registeredAt: new Date(segmentData.record.Timestamp * 1000).toLocaleString(),
-                  creator: segmentData.record.CreatorAddress,
-                  aiTool: segmentData.record.AiTool,
-                  ipfsCid: segmentData.record.IpfsCid,
-                  mediaS3Url: segmentData.record.MediaS3Url,
-                  mediaIpfsUrl: segmentData.record.MediaIpfsUrl,
-                });
+              const existingIndex = matches.findIndex(m => m.assetId.toLowerCase().includes(segmentData.record.Sha256Hash?.slice(0, 8).toLowerCase()));
+              const newMatch = {
+                matchType: segmentData.is_deepfake ? 'deepfake' : 'similar',
+                isDeepfake: segmentData.is_deepfake,
+                similarity: segmentData.similarity || 90,
+                assetId: segmentData.record.Sha256Hash?.slice(0, 16),
+                sha256: segmentData.record.Sha256Hash,
+                mediaType: hashData.media_type || 'unknown',
+                registeredAt: new Date(segmentData.record.Timestamp * 1000).toLocaleString(),
+                creator: segmentData.record.CreatorAddress,
+                aiTool: segmentData.record.AiTool,
+                ipfsCid: segmentData.record.IpfsCid,
+                mediaS3Url: segmentData.record.MediaS3Url,
+                mediaIpfsUrl: segmentData.record.MediaIpfsUrl,
+              };
+
+              if (existingIndex >= 0) {
+                // Upgrade the match if the backend found a deepfake, or if it has more accurate similarity
+                if (segmentData.is_deepfake || matches[existingIndex].matchType !== 'exact') {
+                  matches[existingIndex] = { ...matches[existingIndex], ...newMatch };
+                }
+              } else {
+                matches.push(newMatch);
               }
             }
           }
@@ -368,12 +412,12 @@ export default function VerifyPage() {
         console.warn('Core Backend similarity search failed:', dbErr.message)
       }
       setDbResults(matches)
-      
+
       // Increment local verification stats
       try {
         const count = Number(localStorage.getItem('vt_verifs_count') || 0)
         localStorage.setItem('vt_verifs_count', count + 1)
-      } catch (e) {}
+      } catch (e) { }
     } catch (err) {
       console.error('Verification error:', err)
       setError(`Failed to perform verification check: ${err.message}`)
@@ -395,14 +439,14 @@ export default function VerifyPage() {
       <div className="grid-2">
         {/* ── LEFT COLUMN: File Upload + Hash Display ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          
+
           {/* File Upload Zone */}
           <div className="card">
             <div className="card-header">
               <h2 className="card-header-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '0.5rem' }}>
-                  <circle cx="11" cy="11" r="8"/>
-                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
                 Upload File to Verify
               </h2>
@@ -477,7 +521,7 @@ export default function VerifyPage() {
 
         {/* ── RIGHT COLUMN: Verification Results ── */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-          
+
           {/* On-Chain Provenance Record */}
           {(blockchainRecord || loading) && (
             <div className="card animate-slide-up" style={{ borderColor: blockchainRecord ? 'var(--color-success)' : 'var(--color-border)' }}>
@@ -600,6 +644,78 @@ export default function VerifyPage() {
               )}
             </div>
           </div>
+
+          {/* ── Image Diff Heatmap Card ── */}
+          {dbResults && dbResults.length > 0 && file && (
+            <div className="card animate-slide-up" style={{ borderColor: 'var(--color-error)', borderWidth: '1px', borderStyle: 'solid' }}>
+              <div className="card-header" style={{ background: 'rgba(220,38,38,0.08)' }}>
+                <h2 className="card-header-title" style={{ color: 'var(--color-error)' }}>
+                  🔍 Visual Diff Heatmap
+                </h2>
+                <button
+                  className="btn btn-sm"
+                  onClick={handleGenerateHeatmap}
+                  disabled={heatmapLoading || !originalUrl}
+                  style={{
+                    background: originalUrl ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : '#ccc',
+                    color: 'white',
+                    border: 'none',
+                    fontWeight: 700,
+                    padding: '0.4rem 1rem',
+                    borderRadius: '6px',
+                    cursor: originalUrl ? 'pointer' : 'not-allowed',
+                  }}
+                >
+                  {heatmapLoading ? '⏳ Analyzing pixels...' : '🔍 Generate Diff Heatmap'}
+                </button>
+              </div>
+              <div className="card-body">
+                {/* Side by side preview + heatmap */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                  {/* Uploaded File */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Your Uploaded File</div>
+                    <div style={{ background: '#0d0d0d', borderRadius: '8px', overflow: 'hidden', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {file && <img src={URL.createObjectURL(file)} alt="Uploaded" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />}
+                    </div>
+                  </div>
+                  {/* Registered Original */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--color-text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Registered Original</div>
+                    <div style={{ background: '#0d0d0d', borderRadius: '8px', overflow: 'hidden', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {originalUrl
+                        ? <img src={originalUrl} alt="Original" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                        : <div style={{ color: '#666', fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>No preview available<br />(Legacy registration)</div>
+                      }
+                    </div>
+                  </div>
+                  {/* Heatmap Result */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                    <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--color-error)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pixel Diff Heatmap</div>
+                    <div style={{ background: '#0d0d0d', borderRadius: '8px', overflow: 'hidden', height: '280px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px dashed rgba(220,38,38,0.4)' }}>
+                      {heatmapLoading ? (
+                        <div style={{ textAlign: 'center', color: '#aaa' }}>
+                          <div className="spinner" style={{ borderTopColor: '#dc2626' }} />
+                          <div style={{ marginTop: '0.75rem', fontSize: '0.75rem' }}>Analyzing pixel differences...</div>
+                        </div>
+                      ) : heatmapBase64 ? (
+                        <img src={heatmapBase64} alt="Diff Heatmap" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
+                      ) : heatmapError ? (
+                        <div style={{ color: '#dc2626', fontSize: '0.75rem', textAlign: 'center', padding: '1rem' }}>{heatmapError}</div>
+                      ) : (
+                        <div style={{ color: '#555', fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>
+                          🔍 Click &quot;Generate Diff Heatmap&quot;<br />to see pixel-level differences
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.75rem', fontSize: '0.75rem', color: 'var(--color-text-muted)' }}>
+                  Red pixels = altered areas. The AI compares your uploaded file against the registered original byte-by-byte.
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Error Banner */}
           {error && (

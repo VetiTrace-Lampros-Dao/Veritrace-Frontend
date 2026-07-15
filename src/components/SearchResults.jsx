@@ -25,6 +25,8 @@ import { ARBITRUM_SEPOLIA, CORE_BACKEND_API } from '../config'
 export default function SearchResults({ results, loading, uploadedFile }) {
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
   const [comparisonMatch, setComparisonMatch] = useState(null)
+  const [heatmapBase64, setHeatmapBase64] = useState(null)
+  const [heatmapLoading, setHeatmapLoading] = useState(false)
 
   // Client-side on-demand IPFS metadata resolver states for comparison modal
   const [resolvedOriginalUrl, setResolvedOriginalUrl] = useState(null)
@@ -66,10 +68,10 @@ export default function SearchResults({ results, loading, uploadedFile }) {
     }
 
     const { mediaS3Url, mediaIpfsUrl, ipfsCid, mediaType, sha256, assetId } = comparisonMatch
-    
+
     // Check localStorage cache first to support archived legacy overrides and registered cache
     const hashKey = (sha256 || assetId || '').toLowerCase()
-    
+
     // Check unified media cache first
     const cachedMediaStr = localStorage.getItem(`vt_media_${hashKey}`)
     if (cachedMediaStr) {
@@ -81,7 +83,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
           setLoadingOriginal(false)
           return
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     const cachedUrl = localStorage.getItem(`vt_legacy_${hashKey}`) || localStorage.getItem(`vt_legacy_${sha256 || assetId}`)
@@ -108,12 +110,12 @@ export default function SearchResults({ results, loading, uploadedFile }) {
         try {
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), 4000)
-          
+
           const res = await fetch(`https://gateway.pinata.cloud/ipfs/${ipfsCid}`, {
             signal: controller.signal
           })
           clearTimeout(timeoutId)
-          
+
           if (res.ok) {
             const meta = await res.json()
             const realUrl = getGatewayUrl(meta.media_s3_url || meta.media_ipfs_url)
@@ -144,19 +146,51 @@ export default function SearchResults({ results, loading, uploadedFile }) {
     }
   }, [comparisonMatch])
 
+  const handleViewAlterations = async () => {
+    if (!uploadedFile || !resolvedOriginalUrl) return
+    setHeatmapLoading(true)
+    try {
+      // 1. Fetch the original image blob
+      const res = await fetch(resolvedOriginalUrl)
+      const blob = await res.blob()
+
+      // 2. Create FormData with both images
+      const fd = new FormData()
+      fd.append('file1', blob, 'original.jpg')
+      fd.append('file2', uploadedFile)
+
+      // 3. Send to Hashing Engine proxy
+      const compareRes = await fetch(`https://api.hash.veritrace.dpkvtrading.online/api/v1/compare`, {
+        method: 'POST',
+        body: fd
+      })
+
+      if (compareRes.ok) {
+        const data = await compareRes.json()
+        setHeatmapBase64(data.heatmap_base64)
+      } else {
+        console.error('Heatmap generation failed:', await compareRes.text())
+      }
+    } catch (err) {
+      console.error('Failed to generate heatmap:', err)
+    } finally {
+      setHeatmapLoading(false)
+    }
+  }
+
   const handleArchiveLegacy = async () => {
     if (!uploadedFile || !comparisonMatch) return
-    
+
     setUploadingLegacy(true)
     try {
       const formData = new FormData()
       formData.append('file', uploadedFile)
-      
+
       const res = await fetch(`${CORE_BACKEND_API}/api/v1/pin-file`, {
         method: 'POST',
         body: formData
       })
-      
+
       if (res.ok) {
         const data = await res.json()
         const mediaUrl = data.media_s3_url || data.media_ipfs_url
@@ -227,8 +261,8 @@ export default function SearchResults({ results, loading, uploadedFile }) {
       <div className="empty-state animate-fade-in">
         <div className="empty-state-icon" style={{ background: 'var(--color-success-bg)', color: 'var(--color-success)' }}>
           <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-            <polyline points="22 4 12 14.01 9 11.01"/>
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+            <polyline points="22 4 12 14.01 9 11.01" />
           </svg>
         </div>
         <div className="empty-state-title">No matches found</div>
@@ -244,10 +278,10 @@ export default function SearchResults({ results, loading, uploadedFile }) {
     <>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         {results.map((result, index) => (
-          <MatchCard 
-            key={index} 
-            result={result} 
-            localPreviewUrl={localPreviewUrl} 
+          <MatchCard
+            key={index}
+            result={result}
+            localPreviewUrl={localPreviewUrl}
             onSelect={() => setComparisonMatch(result)}
           />
         ))}
@@ -268,33 +302,36 @@ export default function SearchResults({ results, loading, uploadedFile }) {
         }}>
           <div className="modal-card card animate-scale-in" onClick={(e) => e.stopPropagation()} style={{
             width: '100%',
-            maxWidth: '850px',
+            maxWidth: '1100px',
+            maxHeight: '92vh',
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
             borderRadius: 'var(--radius-lg)',
             boxShadow: 'var(--shadow-lg)',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <div className="card-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h2 className="card-header-title" style={{ display: 'flex', alignItems: 'center', gap: '0.375rem' }}>
                 <span>🔍</span> Authenticity Check — {comparisonMatch.similarity?.toFixed(1)}% Match
               </h2>
-              <button 
-                className="btn btn-sm btn-outline" 
+              <button
+                className="btn btn-sm btn-outline"
                 onClick={() => setComparisonMatch(null)}
                 style={{ padding: '0.25rem 0.5rem' }}
               >
                 ✕ Close
               </button>
             </div>
-            
-            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+            <div className="card-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', overflowY: 'auto', flex: 1 }}>
               {/* SIDE-BY-SIDE PANELS */}
               <div style={{
                 display: 'grid',
                 gridTemplateColumns: '1fr 1fr',
                 gap: '1rem',
-                minHeight: '280px'
+                minHeight: '420px'
               }}>
                 {/* LEFT SIDE: UPLOADED FILE FOR VERIFICATION */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
@@ -312,17 +349,17 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                     alignItems: 'center',
                     justifyContent: 'center',
                     position: 'relative',
-                    height: '280px'
+                    height: '400px'
                   }}>
                     {uploadedFile && uploadedFile.type?.startsWith('video/') ? (
-                      <video 
-                        src={localPreviewUrl} 
+                      <video
+                        src={localPreviewUrl}
                         controls
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                       />
                     ) : localPreviewUrl ? (
-                      <img 
-                        src={localPreviewUrl} 
+                      <img
+                        src={localPreviewUrl}
                         alt="Uploaded Verification File"
                         style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
                       />
@@ -337,7 +374,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                   <div style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--color-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
                     Matched Original (On-Chain)
                   </div>
-                  <div 
+                  <div
                     style={{
                       width: '100%',
                       flex: 1,
@@ -349,7 +386,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                       alignItems: 'center',
                       justifyContent: 'center',
                       position: 'relative',
-                      height: '280px'
+                      height: '400px'
                     }}
                     onContextMenu={(e) => e.preventDefault()}
                   >
@@ -361,14 +398,14 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                     ) : resolvedOriginalUrl ? (
                       <>
                         {resolvedMediaType === 'video' ? (
-                          <video 
+                          <video
                             src={resolvedOriginalUrl}
                             controls
                             controlsList="nodownload"
                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
                           />
                         ) : (
-                          <img 
+                          <img
                             src={resolvedOriginalUrl}
                             alt="Matched Registry Asset"
                             style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', userSelect: 'none', pointerEvents: 'none' }}
@@ -435,12 +472,54 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                   <div style={{ color: 'var(--color-text-muted)' }}>Registration Date: {comparisonMatch.registeredAt}</div>
                 </div>
               </div>
+
+              {/* Heatmap result display — shown after clicking the footer button */}
+              {heatmapBase64 && (
+                <div style={{ borderTop: '1px solid var(--color-border)', paddingTop: '1.25rem' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--color-error)', marginBottom: '0.5rem' }}>🚨 Visual Alteration Heatmap — Pixel Diff Result</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginBottom: '0.75rem' }}>Red areas indicate pixels that were altered from the original registered asset.</div>
+                  <div className="animate-scale-in" style={{
+                    width: '100%',
+                    background: '#0d0d0d',
+                    borderRadius: 'var(--radius-md)',
+                    border: '1px solid var(--color-border)',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '350px'
+                  }}>
+                    <img
+                      src={heatmapBase64}
+                      alt="Alteration Heatmap"
+                      style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
-            
-            <div className="card-footer" style={{ background: 'var(--color-bg)' }}>
-              <button 
+
+            <div className="card-footer" style={{ background: 'var(--color-bg)', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+              {/* Always-visible heatmap button pinned in footer */}
+              <button
+                onClick={handleViewAlterations}
+                disabled={heatmapLoading || !resolvedOriginalUrl}
+                className="btn btn-sm"
+                style={{
+                  background: resolvedOriginalUrl ? 'linear-gradient(135deg, #dc2626, #b91c1c)' : 'var(--color-border)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '0.5rem 1rem',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                  flex: '0 0 auto'
+                }}
+              >
+                {heatmapLoading ? '⏳ Analyzing...' : '🔍 Generate Diff Heatmap'}
+              </button>
+              <button
                 className="btn btn-sm btn-primary w-full"
-                onClick={() => setComparisonMatch(null)}
+                onClick={() => { setComparisonMatch(null); setHeatmapBase64(null); }}
               >
                 Acknowledge Match Details & Close
               </button>
