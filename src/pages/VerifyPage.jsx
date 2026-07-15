@@ -317,12 +317,14 @@ export default function VerifyPage() {
             offset: Number(k.offset),
             phash: Number(k.phash),
             semantic_hash: k.semantic_hash || [],
+            face_hash: k.face_hash || [],
           }));
         } else if (hashData.phash) {
           segmentsPayload = [{
             offset: 0,
             phash: Number(hashData.phash),
             semantic_hash: hashData.semantic_hash || [],
+            face_hash: hashData.face_hash || [],
           }];
         }
 
@@ -345,7 +347,8 @@ export default function VerifyPage() {
               const alreadyMatched = matches.some(m => m.assetId.toLowerCase().includes(segmentData.record.Sha256Hash?.slice(0, 8).toLowerCase()));
               if (!alreadyMatched) {
                 matches.push({
-                  matchType: 'similar',
+                  matchType: segmentData.is_deepfake ? 'deepfake' : 'similar',
+                  isDeepfake: segmentData.is_deepfake,
                   similarity: segmentData.similarity || 90,
                   assetId: segmentData.record.Sha256Hash?.slice(0, 16),
                   sha256: segmentData.record.Sha256Hash,

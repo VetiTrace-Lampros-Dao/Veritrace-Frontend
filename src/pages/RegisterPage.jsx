@@ -273,7 +273,9 @@ export default function RegisterPage() {
         webhook_url: webhookUrl,
         parent_sha256: '',
         media_type: hashes.mediaType || 'image',
-        keyframes: [],
+        semantic_hash: hashes.semantic_hash || [],
+        face_hash: hashes.face_hash || [],
+        keyframes: hashes.keyframes || [],
       }
 
       const pinMetaRes = await fetch(`${CORE_BACKEND_API}/api/v1/pin`, {

@@ -457,18 +457,19 @@ export default function SearchResults({ results, loading, uploadedFile }) {
  */
 function MatchCard({ result, localPreviewUrl, onSelect }) {
   const isExact = result.matchType === 'exact'
+  const isDeepfake = result.matchType === 'deepfake' || result.isDeepfake
   const percentage = result.similarity || 0
 
   return (
     <div className="match-card animate-fade-in" onClick={onSelect} style={{ cursor: 'pointer' }}>
       {/* ── Left color indicator ── */}
-      <div className={`match-card-indicator ${isExact ? 'exact' : 'similar'}`} />
+      <div className={`match-card-indicator ${isExact ? 'exact' : isDeepfake ? 'error' : 'similar'}`} style={isDeepfake ? { backgroundColor: 'var(--color-error)' } : {}} />
 
       {/* ── Card body with match details ── */}
       <div className="match-card-body">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <span className={`badge ${isExact ? 'badge-success' : 'badge-warning'}`}>
-            {isExact ? '✓ Exact Match' : '≈ Similar'}
+          <span className={`badge ${isExact ? 'badge-success' : isDeepfake ? 'badge-error' : 'badge-warning'}`} style={isDeepfake ? { backgroundColor: '#dc2626', color: '#fff' } : {}}>
+            {isExact ? '✓ Exact Match' : isDeepfake ? '🚨 DEEPFAKE DETECTED' : '≈ Similar'}
           </span>
           <span className="text-cap">
             {result.mediaType || 'unknown'}
@@ -575,9 +576,11 @@ function MatchCard({ result, localPreviewUrl, onSelect }) {
           <div className="match-percentage-value" style={{
             color: isExact
               ? 'var(--color-success)'
-              : percentage >= 80
-                ? 'var(--color-warning)'
-                : 'var(--color-text-muted)'
+              : isDeepfake
+                ? '#dc2626'
+                : percentage >= 80
+                  ? 'var(--color-warning)'
+                  : 'var(--color-text-muted)'
           }}>
             {percentage.toFixed(1)}%
           </div>
