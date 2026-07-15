@@ -148,6 +148,8 @@ export default function RegisterPage() {
         hashCount: data.keyframes ? data.keyframes.length : 0,
         assetId: `asset-${Date.now()}`,
         mediaType: data.media_type,
+        aiConfidenceScore: data.ai_confidence_score,
+        keyframes: data.keyframes,
       })
       setStep(2)
     } catch (err) {
@@ -182,6 +184,20 @@ export default function RegisterPage() {
 
     try {
       setSigning(true)
+      
+      let maxConf = hashes.aiConfidenceScore || 0;
+      if (hashes.keyframes) {
+        hashes.keyframes.forEach(kf => {
+          if (kf.ai_confidence_score > maxConf) maxConf = kf.ai_confidence_score;
+        });
+      }
+
+      if (aiCategory === 'None (Authentic Content)' && maxConf > 0.75) {
+        setError(`Lie Detected ❌\n\nOur AI analyzer detected a high probability (${(maxConf * 100).toFixed(1)}%) that this media is AI-generated. You cannot register this as Authentic Content.\n\nPlease declare the correct AI tool to proceed.`);
+        setSigning(false);
+        return;
+      }
+
       setStep(3)
 
       // ── Verify we're on Arbitrum Sepolia ──
