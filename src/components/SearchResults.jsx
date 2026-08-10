@@ -45,7 +45,7 @@ function buildLineageTree(records) {
 function TreeNode({ node, targetHash, onSelectNode }) {
   if (!node) return null;
   const currentHash = (node.sha256_hash || node.Sha256Hash || '').toLowerCase();
-  const isTarget = currentHash === targetHash.toLowerCase();
+  const isTarget = currentHash && targetHash && currentHash === targetHash.toLowerCase();
   
   const rawAddr = node.creator_address || node.CreatorAddress
   const shortAddress = rawAddr && typeof rawAddr === 'string'
@@ -53,11 +53,11 @@ function TreeNode({ node, targetHash, onSelectNode }) {
     : 'Unknown';
 
   const getGatewayUrl = (url, cid) => {
-    if (url) {
+    if (url && typeof url === 'string') {
       if (url.startsWith('ipfs://')) return `https://gateway.pinata.cloud/ipfs/${url.slice(7)}`;
       return url;
     }
-    if (cid) return `https://gateway.pinata.cloud/ipfs/${cid}`;
+    if (cid && typeof cid === 'string') return `https://gateway.pinata.cloud/ipfs/${cid}`;
     return null;
   };
 
@@ -225,7 +225,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
     return () => URL.revokeObjectURL(url)
   }, [uploadedFile])
 
-  const getGatewayUrl = (url) => { if (!url) return null; if (url.startsWith('ipfs://')) return `https://gateway.pinata.cloud/ipfs/${url.slice(7)}`; return url }
+  const getGatewayUrl = (url) => { if (!url || typeof url !== 'string') return null; if (url.startsWith('ipfs://')) return `https://gateway.pinata.cloud/ipfs/${url.slice(7)}`; return url }
 
   useEffect(() => {
     if (!comparisonMatch) { setResolvedOriginalUrl(null); setResolvedMediaType('image'); setLoadingOriginal(false); return }
@@ -579,8 +579,8 @@ function MatchCard({ result, onSelect, isEarliest }) {
   const isDeepfake = result.matchType === 'deepfake' || result.isDeepfake
   const isAudioDeepfake = result.isAudioDeepfake
   const percentage = result.similarity || 0
-  const getGatewayUrl = (url) => url?.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${url.slice(7)}` : url
-  const isLegacy = !result.ipfsCid || result.ipfsCid === '' || result.ipfsCid.startsWith('QmYourMetadataCid')
+  const getGatewayUrl = (url) => { if (!url || typeof url !== 'string') return null; return url.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${url.slice(7)}` : url }
+  const isLegacy = !result.ipfsCid || result.ipfsCid === '' || (typeof result.ipfsCid === 'string' && result.ipfsCid.startsWith('QmYourMetadataCid'))
   const previewUrl = getGatewayUrl(result.mediaS3Url) || getGatewayUrl(result.mediaIpfsUrl)
 
   return (

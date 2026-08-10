@@ -93,7 +93,7 @@ export default function VerifyPage() {
         xhr.open('POST', `${HASH_ENGINE_API}/api/v1/hash`)
         xhr.send(formData)
       })
-      if (hashData.phash) setPhash(hashData.phash)
+      if (hashData.phash) setPhash(hashData.phash.toString())
       setFullHashes(hashData)
 
       const matches = []

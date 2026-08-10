@@ -23,6 +23,7 @@ import PageHero from '../components/PageHero'
 import { ScrollReveal } from '../components/ui/scroll-reveal'
 import { useUpload } from '../context/UploadContext'
 import { downloadCertificate } from '../utils/generateCertificate'
+import { cn } from '@/lib/utils'
 import { Upload, Fingerprint, Shield, CircleCheck as CheckCircle2, FilePlus, TriangleAlert as AlertTriangle, ExternalLink, Award, Bot, Webhook, FileText, Type } from 'lucide-react'
 import {
   HASH_ENGINE_API, CORE_BACKEND_API, CONTRACT_ADDRESS, CONTRACT_ABI, ARBITRUM_SEPOLIA,
@@ -100,7 +101,7 @@ export default function RegisterPage() {
       })
       if (!data.sha256) throw new Error('Server response missing SHA-256 hash')
       setHashes({
-        sha256: data.sha256, phash: data.phash,
+        sha256: data.sha256, phash: data.phash ? data.phash.toString() : null,
         hashCount: data.keyframes ? data.keyframes.length : 0,
         assetId: `asset-${Date.now()}`, mediaType: data.media_type,
         aiConfidenceScore: data.ai_confidence_score,
