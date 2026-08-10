@@ -277,12 +277,57 @@ export default function VerifyPage() {
             )}
           </AnimatePresence>
 
-          <Card className="card-hover-glow">
-            <CardHeader><CardTitle><Info size={16} className="text-[var(--accent)]" /> Read the evidence</CardTitle></CardHeader>
-            <CardBody className="text-xs flex flex-col gap-2.5">
-              <div className="flex items-start gap-3"><Badge variant="success" className="flex-shrink-0 mt-0.5">100%</Badge><div><strong className="text-[var(--text)]">Exact match</strong> — The cryptographic fingerprints are identical: this is the registered file, byte for byte.</div></div>
-              <div className="flex items-start gap-3"><Badge variant="warning" className="flex-shrink-0 mt-0.5">80-99%</Badge><div><strong className="text-[var(--text)]">Similar Content</strong> — Perceptual signatures match closely. May be compressed, resized, or cropped.</div></div>
-              <div className="flex items-start gap-3"><Badge variant="default" className="flex-shrink-0 mt-0.5">&lt;80%</Badge><div><strong className="text-[var(--text)]">No Match</strong> — No entries found within visual or cryptographic thresholds.</div></div>
+          <Card className="card-hover-glow border-[var(--border)] overflow-hidden">
+            <CardHeader className="border-b border-[var(--border)] bg-[var(--bg-2)]/30">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight">
+                <Info size={15} className="text-[var(--accent)]" />
+                Verification Thresholds
+              </CardTitle>
+            </CardHeader>
+            <CardBody className="flex flex-col gap-3 p-4 text-xs">
+              <div className="relative flex gap-3 p-3 rounded-xl border border-[var(--success-text, #4CAF50)]/20 bg-[var(--success-text, #4CAF50)]/5 transition-all hover:bg-[var(--success-text, #4CAF50)]/10">
+                <div className="flex-shrink-0 font-bold text-sm text-[var(--success-text, #4CAF50)] min-w-[36px] pt-0.5">
+                  100%
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                    Cryptographic Match
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--success-text, #4CAF50)] animate-pulse" />
+                  </div>
+                  <div className="text-[var(--text-3)] leading-relaxed text-[11px]">
+                    Byte-level validation. The uploaded file is completely identical to the registered original.
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative flex gap-3 p-3 rounded-xl border border-[#FF9B00]/20 bg-[#FF9B00]/5 transition-all hover:bg-[#FF9B00]/10">
+                <div className="flex-shrink-0 font-bold text-sm text-[#FF9B00] min-w-[36px] pt-0.5">
+                  80%+
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
+                    Perceptual Match
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF9B00]" />
+                  </div>
+                  <div className="text-[var(--text-3)] leading-relaxed text-[11px]">
+                    Structural verification. The content matches closely, indicating potential cropping, resizing, or compression.
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative flex gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--bg-2)]/40 transition-all hover:bg-[var(--bg-2)]/60">
+                <div className="flex-shrink-0 font-bold text-sm text-[var(--text-3)] min-w-[36px] pt-0.5">
+                  &lt;80%
+                </div>
+                <div className="flex flex-col gap-0.5">
+                  <div className="font-semibold text-[var(--text-2)] flex items-center gap-1.5">
+                    Unregistered / Original
+                  </div>
+                  <div className="text-[var(--text-4)] leading-relaxed text-[11px]">
+                    No matching record. The media is unique or has not yet been registered on-chain.
+                  </div>
+                </div>
+              </div>
             </CardBody>
           </Card>
         </div>
