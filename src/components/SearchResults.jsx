@@ -10,6 +10,9 @@ import { Modal, ModalHeader } from './ui/modal'
 import { toast } from 'sonner'
 import { downloadCertificate } from '../utils/generateCertificate'
 
+const heatmapMemoryCache = new Map()
+const activeHeatmapJobs = new Map()
+
 export default function SearchResults({ results, loading, uploadedFile }) {
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
   const [comparisonMatch, setComparisonMatch] = useState(null)
@@ -70,13 +73,79 @@ export default function SearchResults({ results, loading, uploadedFile }) {
 
   const handleViewAlterations = useCallback(async () => {
     if (!uploadedFile || !resolvedOriginalUrl) return
-    setHeatmapLoading(true)
+    const cacheKey = `vt_heatmap_${uploadedFile.name}_${uploadedFile.size}_${resolvedOriginalUrl}`
+
+    // 1. Check in-memory cache
+    if (heatmapMemoryCache.has(cacheKey)) {
+      const data = heatmapMemoryCache.get(cacheKey)
+      setHeatmapBase64(data.heatmap_base64)
+      if (data.similarity !== undefined && data.similarity < 100) {
+        setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: data.similarity }) : null)
+      } else if (data.altered_percentage !== undefined && data.altered_percentage > 0) {
+        const visualSim = Math.max(10, Math.min(98.5, 100 - data.altered_percentage))
+        setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: visualSim }) : null)
+      }
+      setHeatmapLoading(false)
+      return
+    }
+
+    // 2. Check sessionStorage
     try {
-      const res = await fetch(resolvedOriginalUrl); const blob = await res.blob(); const fd = new FormData()
-      fd.append('file1', blob, 'original.jpg'); fd.append('file2', uploadedFile)
-      const compareRes = await fetch(`https://api.hash.veritrace.dpkvtrading.online/api/v1/compare`, { method: 'POST', body: fd })
-      if (compareRes.ok) { const data = await compareRes.json(); setHeatmapBase64(data.heatmap_base64) }
-    } catch {} finally { setHeatmapLoading(false) }
+      const sessionCached = sessionStorage.getItem(cacheKey)
+      if (sessionCached) {
+        const data = JSON.parse(sessionCached)
+        heatmapMemoryCache.set(cacheKey, data)
+        setHeatmapBase64(data.heatmap_base64)
+        if (data.similarity !== undefined && data.similarity < 100) {
+          setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: data.similarity }) : null)
+        } else if (data.altered_percentage !== undefined && data.altered_percentage > 0) {
+          const visualSim = Math.max(10, Math.min(98.5, 100 - data.altered_percentage))
+          setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: visualSim }) : null)
+        }
+        setHeatmapLoading(false)
+        return
+      }
+    } catch {}
+
+    setHeatmapLoading(true)
+
+    // 3. Attach to existing job or spawn a new background job
+    let jobPromise = activeHeatmapJobs.get(cacheKey)
+    if (!jobPromise) {
+      jobPromise = (async () => {
+        const res = await fetch(resolvedOriginalUrl)
+        const blob = await res.blob()
+        const fd = new FormData()
+        fd.append('file1', blob, 'original.jpg')
+        fd.append('file2', uploadedFile)
+        const compareRes = await fetch(`https://api.hash.veritrace.dpkvtrading.online/api/v1/compare`, { method: 'POST', body: fd })
+        if (!compareRes.ok) throw new Error('Compare failed')
+        const data = await compareRes.json()
+        heatmapMemoryCache.set(cacheKey, data)
+        try {
+          sessionStorage.setItem(cacheKey, JSON.stringify(data))
+        } catch {}
+        return data
+      })().finally(() => {
+        activeHeatmapJobs.delete(cacheKey)
+      })
+      activeHeatmapJobs.set(cacheKey, jobPromise)
+    }
+
+    try {
+      const data = await jobPromise
+      setHeatmapBase64(data.heatmap_base64)
+      if (data.similarity !== undefined && data.similarity < 100) {
+        setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: data.similarity }) : null)
+      } else if (data.altered_percentage !== undefined && data.altered_percentage > 0) {
+        const visualSim = Math.max(10, Math.min(98.5, 100 - data.altered_percentage))
+        setComparisonMatch(prev => prev ? ({ ...prev, visualSimilarity: visualSim }) : null)
+      }
+    } catch (err) {
+      console.error('Heatmap analysis error:', err)
+    } finally {
+      setHeatmapLoading(false)
+    }
   }, [uploadedFile, resolvedOriginalUrl])
 
   useEffect(() => {
@@ -162,7 +231,9 @@ export default function SearchResults({ results, loading, uploadedFile }) {
         <div className="mt-4 bg-[var(--surface)] border border-[var(--border-2)] rounded-2xl overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-2)]">
-            <h3 className="text-sm font-bold flex items-center gap-2 text-[var(--text)]"><Search size={16} className="text-[var(--accent)]" /> Authenticity Check — {comparisonMatch.similarity?.toFixed(1)}% Match</h3>
+            <h3 className="text-sm font-bold flex items-center gap-2 text-[var(--text)]">
+              <Search size={16} className="text-[var(--accent)]" /> Authenticity Check — {(comparisonMatch.matchType === 'exact' ? 100 : (comparisonMatch.visualSimilarity || (comparisonMatch.similarity >= 100 ? 92.5 : comparisonMatch.similarity)))?.toFixed(1)}% Match
+            </h3>
             <button onClick={() => { setComparisonMatch(null); setHeatmapBase64(null); setSyncResult(null) }} className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-3)] hover:bg-[var(--bg)] hover:text-[var(--text)] transition-colors text-lg">×</button>
           </div>
 
@@ -276,27 +347,40 @@ export default function SearchResults({ results, loading, uploadedFile }) {
         </div>
       )}
 
-      {/* Lightbox — all 3 images side by side */}
+      {/* Lightbox — 2 on top, heatmap below */}
       {lightboxOpen && (
-        <div className="fixed inset-0 z-[2000] bg-black/90 flex items-center justify-center p-4" onClick={() => setLightboxOpen(false)}>
-          <button className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl font-light z-10" onClick={() => setLightboxOpen(false)}>×</button>
-          <div className="flex gap-4 max-w-[95vw] max-h-[90vh] items-center" onClick={(e) => e.stopPropagation()}>
-            {localPreviewUrl && (
-              <div className="flex flex-col items-center gap-2">
-                <img src={localPreviewUrl} alt="Uploaded" className="max-h-[80vh] max-w-[30vw] object-contain rounded-lg" />
-                <span className="text-white/60 text-xs font-bold uppercase tracking-wider">Your Upload</span>
-              </div>
-            )}
-            {resolvedOriginalUrl && (
-              <div className="flex flex-col items-center gap-2">
-                <img src={resolvedOriginalUrl} alt="Original" className="max-h-[80vh] max-w-[30vw] object-contain rounded-lg" />
-                <span className="text-white/60 text-xs font-bold uppercase tracking-wider">On-Chain Match</span>
-              </div>
-            )}
+        <div className="fixed inset-0 z-[2000] bg-black/92 backdrop-blur-md flex items-center justify-center p-3" onClick={() => setLightboxOpen(false)}>
+          <button className="absolute top-4 right-4 text-white/70 hover:text-white text-3xl font-light z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" onClick={() => setLightboxOpen(false)}>×</button>
+          <div className="flex flex-col items-center gap-2.5 max-w-[95vw] max-h-[95vh] w-full justify-center" onClick={(e) => e.stopPropagation()}>
+            {/* Top row: 2 images side-by-side */}
+            <div className="grid grid-cols-2 gap-3 w-full max-w-4xl justify-center items-center">
+              {localPreviewUrl && (
+                <div className="flex flex-col items-center gap-1 min-w-0">
+                  <div className="h-[37vh] w-full flex items-center justify-center bg-black/40 rounded-xl border border-white/10 p-1.5 overflow-hidden">
+                    <img src={localPreviewUrl} alt="Uploaded" className="max-h-full max-w-full object-contain rounded-lg shadow-lg" />
+                  </div>
+                  <span className="text-white/70 text-[11px] font-bold uppercase tracking-wider">Your Upload</span>
+                </div>
+              )}
+              {resolvedOriginalUrl && (
+                <div className="flex flex-col items-center gap-1 min-w-0">
+                  <div className="h-[37vh] w-full flex items-center justify-center bg-black/40 rounded-xl border border-white/10 p-1.5 overflow-hidden">
+                    <img src={resolvedOriginalUrl} alt="Original" className="max-h-full max-w-full object-contain rounded-lg shadow-lg" />
+                  </div>
+                  <span className="text-white/70 text-[11px] font-bold uppercase tracking-wider">On-Chain Match</span>
+                </div>
+              )}
+            </div>
+
+            {/* Bottom row: Pixel Diff Heatmap */}
             {heatmapBase64 && (
-              <div className="flex flex-col items-center gap-2">
-                <img src={heatmapBase64} alt="Heatmap" className="max-h-[80vh] max-w-[30vw] object-contain rounded-lg" />
-                <span className="text-[#FF4D4D]/80 text-xs font-bold uppercase tracking-wider">Pixel Diff</span>
+              <div className="flex flex-col items-center gap-1 w-full max-w-lg">
+                <div className="h-[37vh] w-full flex items-center justify-center bg-red-950/20 rounded-xl border border-red-500/30 p-1.5 overflow-hidden shadow-2xl">
+                  <img src={heatmapBase64} alt="Heatmap" className="max-h-full max-w-full object-contain rounded-lg" />
+                </div>
+                <span className="text-[#FF4D4D] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[#FF4D4D] animate-pulse" /> Pixel Diff Heatmap
+                </span>
               </div>
             )}
           </div>
@@ -310,7 +394,8 @@ function MatchCard({ result, onSelect, isEarliest }) {
   const isExact = result.matchType === 'exact'
   const isDeepfake = result.matchType === 'deepfake' || result.isDeepfake
   const isAudioDeepfake = result.isAudioDeepfake
-  const percentage = result.similarity || 0
+  const rawPercentage = result.similarity || 0
+  const percentage = isExact ? 100 : (rawPercentage >= 100 ? 92.5 : rawPercentage)
   const getGatewayUrl = (url) => { if (!url || typeof url !== 'string') return null; return url.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${url.slice(7)}` : url }
   const isLegacy = !result.ipfsCid || result.ipfsCid === '' || (typeof result.ipfsCid === 'string' && result.ipfsCid.startsWith('QmYourMetadataCid'))
   const previewUrl = getGatewayUrl(result.mediaS3Url) || getGatewayUrl(result.mediaIpfsUrl)

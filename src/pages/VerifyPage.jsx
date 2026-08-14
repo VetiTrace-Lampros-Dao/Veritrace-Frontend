@@ -155,16 +155,40 @@ export default function VerifyPage() {
                 const hashKey = item.sha256_hash || item.Sha256Hash
                 if (hashKey) {
                   const existingIndex = matches.findIndex(m => m.sha256?.toLowerCase() === hashKey.toLowerCase())
+                  const isExact = (item.match_type === 'exact') || (hashKey.toLowerCase() === ('0x' + sha256Hex).toLowerCase())
+
+                  let calculatedSimilarity = isExact ? 100 : (item.similarity || 90)
+                  if (!isExact) {
+                    const itemPhash = item.phash || item.PHash || item.record?.phash || item.record?.PHash
+                    if (hashData.phash && itemPhash) {
+                      try {
+                        const b1 = BigInt(hashData.phash)
+                        const b2 = BigInt(itemPhash)
+                        let xor = b1 ^ b2
+                        let dist = 0
+                        while (xor > 0n) {
+                          if (xor & 1n) dist++
+                          xor >>= 1n
+                        }
+                        calculatedSimilarity = Number((((64 - dist) / 64) * 100).toFixed(1))
+                      } catch {}
+                    }
+                    if (calculatedSimilarity >= 100) {
+                      calculatedSimilarity = 92.5
+                    }
+                  }
+
                   const newMatch = {
-                    matchType: item.match_type || (item.is_deepfake ? 'deepfake' : 'similar'),
+                    matchType: isExact ? 'exact' : (item.match_type || (item.is_deepfake ? 'deepfake' : 'similar')),
                     isDeepfake: item.is_deepfake,
                     isAudioDeepfake: item.is_audio_deepfake,
-                    similarity: item.similarity || 90,
-                    confidenceScore: item.confidence_score || item.similarity || 90,
-                    confidenceTier: item.confidence_tier || (item.similarity >= 80 ? 'High' : item.similarity >= 50 ? 'Medium' : 'Low'),
+                    similarity: calculatedSimilarity,
+                    confidenceScore: item.confidence_score !== undefined ? (isExact ? item.confidence_score : Math.min(item.confidence_score, calculatedSimilarity)) : calculatedSimilarity,
+                    confidenceTier: isExact ? (item.confidence_tier || 'High') : (calculatedSimilarity >= 80 ? 'High' : calculatedSimilarity >= 50 ? 'Medium' : 'Low'),
                     temporalIntegrity: item.temporal_integrity !== undefined ? item.temporal_integrity : segmentData.temporal_integrity,
                     assetId: hashKey.slice(0, 16),
                     sha256: hashKey,
+                    phash: item.phash || item.PHash || item.record?.phash,
                     mediaType: item.media_type || hashData.media_type || 'unknown',
                     registeredAt: new Date((item.timestamp || item.Timestamp) * 1000).toLocaleString(),
                     creator: item.creator_address || item.CreatorAddress,
