@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CircleCheck as CheckCircle2, Search, TriangleAlert as AlertTriangle, Lock, Cloud, ExternalLink, Flag } from 'lucide-react'
+import { CircleCheck as CheckCircle2, Search, TriangleAlert as AlertTriangle, Lock, Cloud, ExternalLink } from 'lucide-react'
 import { ARBITRUM_SEPOLIA, CORE_BACKEND_API, HASH_ENGINE_API } from '../config'
 import { Badge } from './ui/badge'
 import { Button } from './ui/button'
@@ -9,115 +9,6 @@ import { EmptyState } from './ui/empty-state'
 import { Modal, ModalHeader } from './ui/modal'
 import { toast } from 'sonner'
 import { downloadCertificate } from '../utils/generateCertificate'
-
-function buildLineageTree(records) {
-  if (!records || records.length === 0) return null;
-  
-  const map = {};
-  records.forEach(r => {
-    const key = (r.sha256_hash || r.Sha256Hash || '').toLowerCase();
-    map[key] = { ...r, children: [] };
-  });
-  
-  let root = null;
-  const sortedRecords = [...records].sort((a, b) => (a.timestamp || a.Timestamp || 0) - (b.timestamp || b.Timestamp || 0));
-  
-  if (sortedRecords.length > 0) {
-    const oldestKey = (sortedRecords[0].sha256_hash || sortedRecords[0].Sha256Hash || '').toLowerCase();
-    root = map[oldestKey];
-  }
-  
-  records.forEach(r => {
-    const childKey = (r.sha256_hash || r.Sha256Hash || '').toLowerCase();
-    const parentKey = (r.parent_sha256 || r.ParentSha256 || '').toLowerCase();
-    
-    if (parentKey && map[parentKey] && childKey !== parentKey) {
-      const exists = map[parentKey].children.some(c => (c.sha256_hash || c.Sha256Hash || '').toLowerCase() === childKey);
-      if (!exists) {
-        map[parentKey].children.push(map[childKey]);
-      }
-    }
-  });
-
-  return root || Object.values(map)[0];
-}
-
-function TreeNode({ node, targetHash, onSelectNode }) {
-  if (!node) return null;
-  const currentHash = (node.sha256_hash || node.Sha256Hash || '').toLowerCase();
-  const isTarget = currentHash && targetHash && currentHash === targetHash.toLowerCase();
-  
-  const rawAddr = node.creator_address || node.CreatorAddress
-  const shortAddress = rawAddr && typeof rawAddr === 'string'
-    ? `${rawAddr.slice(0, 6)}...${rawAddr.slice(-4)}`
-    : 'Unknown';
-
-  const getGatewayUrl = (url, cid) => {
-    if (url && typeof url === 'string') {
-      if (url.startsWith('ipfs://')) return `https://gateway.pinata.cloud/ipfs/${url.slice(7)}`;
-      return url;
-    }
-    if (cid && typeof cid === 'string') return `https://gateway.pinata.cloud/ipfs/${cid}`;
-    return null;
-  };
-
-  const previewSrc = getGatewayUrl(node.media_s3_url || node.media_ipfs_url || node.MediaS3Url || node.MediaIpfsUrl, node.ipfs_cid || node.IpfsCid);
-
-  return (
-    <div className="flex flex-col items-center relative">
-      <div 
-        onClick={() => onSelectNode(node)}
-        className={`z-10 cursor-pointer flex flex-col items-center p-2 bg-[var(--bg-3)] border rounded-xl shadow-lg transition-all duration-200 hover:scale-105 hover:border-[var(--accent)]/50 w-28 text-center ${
-          isTarget ? 'border-[var(--accent)] ring-2 ring-[var(--accent)]/20 bg-[var(--accent)]/5' : 'border-[var(--border)]'
-        }`}
-      >
-        {previewSrc ? (
-          <img 
-            src={previewSrc} 
-            alt="Preview" 
-            className="w-10 h-10 object-cover rounded-md mb-1 border border-[var(--border)]"
-          />
-        ) : (
-          <div className="w-10 h-10 rounded-md bg-[var(--bg-2)] flex items-center justify-center text-[8px] text-[var(--text-3)] mb-1 border border-[var(--border)]">
-            No Img
-          </div>
-        )}
-        <div className="text-[9px] font-bold truncate w-full text-[var(--text-1)]">
-          {node.organization_name || node.organizationName || (node.media_type === 'video' ? 'Video file' : 'Image')}
-        </div>
-        <div className="text-[7px] text-[var(--text-3)] truncate w-full font-mono mt-0.5">
-          {shortAddress}
-        </div>
-        {isTarget && (
-          <span className="mt-1 text-[7px] uppercase tracking-wider font-extrabold text-[var(--accent)] bg-[var(--accent)]/10 px-1.5 py-0.5 rounded">
-            Target
-          </span>
-        )}
-      </div>
-
-      {node.children && node.children.length > 0 && (
-        <div className="flex flex-col items-center w-full relative">
-          <div className="w-0.5 h-4 bg-[var(--border)]"></div>
-          <div className="flex justify-center relative w-full">
-            {node.children.length > 1 && (
-              <div className="absolute top-0 left-0 right-0 h-0.5 bg-[var(--border)] w-[calc(100%-2rem)] mx-auto"></div>
-            )}
-            <div className="flex gap-4 pt-3">
-              {node.children.map((child) => (
-                <TreeNode 
-                  key={child.sha256_hash || child.Sha256Hash || Math.random()} 
-                  node={child} 
-                  targetHash={targetHash} 
-                  onSelectNode={onSelectNode}
-                />
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function SearchResults({ results, loading, uploadedFile }) {
   const [localPreviewUrl, setLocalPreviewUrl] = useState(null)
@@ -130,44 +21,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
   const [uploadingLegacy, setUploadingLegacy] = useState(false)
   const [syncLoading, setSyncLoading] = useState(false)
   const [syncResult, setSyncResult] = useState(null)
-
-  const [showFlagForm, setShowFlagForm] = useState(false)
-  const [flagReason, setFlagReason] = useState('Voice-Cloned/Audio Deepfake')
-  const [submittingFlag, setSubmittingFlag] = useState(false)
-
-  const [lineageData, setLineageData] = useState(null)
-  const [lineageLoading, setLineageLoading] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
-
-  const fetchLineage = async (hash) => {
-    setLineageLoading(true)
-    try {
-      const res = await fetch(`${CORE_BACKEND_API}/api/v1/content/${hash}/lineage`)
-      if (res.ok) {
-        const data = await res.json()
-        if (data.lineage) {
-          setLineageData(buildLineageTree(data.lineage))
-        }
-      }
-    } catch (e) {
-      console.error("Failed to fetch lineage", e)
-    } finally {
-      setLineageLoading(false)
-    }
-  }
-
-  // Reset flag form when comparison target changes
-  useEffect(() => {
-    setShowFlagForm(false)
-    setFlagReason('Voice-Cloned/Audio Deepfake')
-    setLineageData(null)
-    if (comparisonMatch) {
-      const hash = comparisonMatch.sha256Hash || comparisonMatch.sha256_hash || comparisonMatch.sha256
-      if (hash) {
-        fetchLineage(hash)
-      }
-    }
-  }, [comparisonMatch])
 
   const handleDownloadCert = async () => {
     if (!comparisonMatch) return
@@ -183,38 +37,6 @@ export default function SearchResults({ results, loading, uploadedFile }) {
       toast.success('Certificate downloaded successfully!', { id: 'cert' })
     } catch (e) {
       toast.error('Failed to generate certificate: ' + e.message, { id: 'cert' })
-    }
-  }
-
-  const submitDispute = async () => {
-    if (!comparisonMatch) return
-    setSubmittingFlag(true)
-    try {
-      const sha256 = comparisonMatch.sha256
-      const res = await fetch(`${CORE_BACKEND_API}/api/v1/verify/flag`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sha256: sha256,
-          reporter: '0x3d434220b22a0100d395000000000000000002ba', // simulated connected wallet
-          reason: flagReason,
-        }),
-      })
-      if (res.ok) {
-        toast.success('Dispute filed successfully!')
-        setShowFlagForm(false)
-        comparisonMatch.flagCount = (comparisonMatch.flagCount || 0) + 1
-        comparisonMatch.flag_count = (comparisonMatch.flag_count || 0) + 1
-      } else {
-        const data = await res.json()
-        toast.error(`Failed to file dispute: ${data.error || 'Unknown error'}`)
-      }
-    } catch (err) {
-      toast.error(`Error filing dispute: ${err.message}`)
-    } finally {
-      setSubmittingFlag(false)
     }
   }
 
@@ -322,21 +144,8 @@ export default function SearchResults({ results, loading, uploadedFile }) {
     }
   }
 
-  // Check if matches belong to different creators (provenance dispute)
-  const uniqueCreators = new Set(results.map(r => r.creator?.toLowerCase()).filter(Boolean))
-  const isDisputed = uniqueCreators.size > 1
-
   return (
     <>
-      {isDisputed && (
-        <div className="mb-3 p-3 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-start gap-2.5 font-medium">
-          <AlertTriangle size={16} className="text-red-500 flex-shrink-0 mt-0.5" />
-          <div>
-            <strong className="text-red-400">Provenance Dispute Alert:</strong> Visually similar content has been registered by multiple different owner wallets. Check the timeline and registry dates below to identify the true original.
-          </div>
-        </div>
-      )}
-
       <div className="flex flex-col gap-2">
         {results.map((result, index) => (
           <MatchCard 
@@ -409,88 +218,11 @@ export default function SearchResults({ results, loading, uploadedFile }) {
             {comparisonMatch.confidenceTier && (
               <div className="flex items-center gap-2 text-xs text-[var(--text-3)]">
                 Confidence: <span className="font-semibold text-[var(--success-text, #4CAF50)]">{comparisonMatch.confidenceScore?.toFixed(0)}% ({comparisonMatch.confidenceTier})</span>
-                {(comparisonMatch.flagCount || comparisonMatch.flag_count) > 0 && !(comparisonMatch.publisherFlagCount || comparisonMatch.publisher_flag_count) && (
-                  <span className="text-red-400 font-semibold flex items-center gap-1"><Flag size={11} /> {(comparisonMatch.flagCount || comparisonMatch.flag_count)} dispute{(comparisonMatch.flagCount || comparisonMatch.flag_count) !== 1 ? 's' : ''}</span>
-                )}
                 {(comparisonMatch.consensusCount || comparisonMatch.consensus_count) > 1 && (
                   <span className="text-emerald-400 font-semibold">🤝 {(comparisonMatch.consensusCount || comparisonMatch.consensus_count)} consensus</span>
                 )}
               </div>
             )}
-
-            {/* Flag / Dispute Section */}
-            <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-3 mt-1">
-              <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-xl flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-[11px] font-bold uppercase tracking-wider text-red-400 flex items-center gap-1"><Flag size={12} /> Dispute Registry Entry</div>
-                    <div className="text-[10px] text-[var(--text-3)] mt-0.5">Flag this registry match if you believe it is a manipulated variant or plagiarized copy.</div>
-                  </div>
-                  {!showFlagForm && (
-                    <Button variant="outline" size="sm" className="border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/30 text-xs py-1 transition-colors" onClick={() => setShowFlagForm(true)}>
-                      File Dispute
-                    </Button>
-                  )}
-                </div>
-
-                {showFlagForm && (
-                  <div className="flex flex-col gap-2 border-t border-red-500/10 pt-2.5">
-                    <div className="text-[10px] font-semibold text-[var(--text-2)]">Flagger wallet: <span className="font-mono text-[var(--text-3)]">0x3d434220b22a0100d395000000000000000002ba</span> (Connected)</div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[9px] uppercase font-bold text-[var(--text-3)]">Reason for Dispute</label>
-                      <select className="w-full p-2 bg-[var(--bg-2)] border border-[var(--border)] rounded-lg text-xs focus:border-[var(--accent)] focus:outline-none" value={flagReason} onChange={(e) => setFlagReason(e.target.value)}>
-                        <option value="Voice-Cloned/Audio Deepfake">Voice-Cloned/Audio Deepfake</option>
-                        <option value="Cropped or Resized Derivative">Cropped or Resized Derivative</option>
-                        <option value="Manipulated/Altered Pixels">Manipulated/Altered Pixels</option>
-                        <option value="Plagiarized Copy">Plagiarized Copy</option>
-                        <option value="Other / Metadata Override">Other / Metadata Override</option>
-                      </select>
-                    </div>
-                    <div className="flex gap-2 justify-end mt-1">
-                      <Button variant="outline" size="sm" className="text-xs py-1" onClick={() => setShowFlagForm(false)}>Cancel</Button>
-                      <Button variant="primary" size="sm" className="bg-red-500 hover:bg-red-600 border-none text-xs py-1 text-white" onClick={submitDispute} disabled={submittingFlag}>
-                        {submittingFlag ? 'Submitting...' : 'Submit Dispute'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Heritage Tree (Lineage DAG) */}
-            <div className="flex flex-col gap-3 border-t border-[var(--border)] pt-4">
-              <div className="text-xs font-bold uppercase tracking-wider text-[var(--text-2)]">Asset Heritage Tree (Lineage DAG)</div>
-              <div className="text-[11px] text-[var(--text-3)] mb-1">Trace original ancestors, sibling crops, and downstream derivatives. Click any node to inspect details.</div>
-              
-              {lineageLoading ? (
-                <div className="flex justify-center p-6"><Spinner /></div>
-              ) : lineageData ? (
-                <div className="w-full overflow-x-auto py-6 bg-[var(--bg-2)] border border-[var(--border)] rounded-xl flex justify-center min-h-[180px]">
-                  <div className="flex justify-center items-start min-w-max px-6">
-                    <TreeNode 
-                      node={lineageData} 
-                      targetHash={comparisonMatch.sha256Hash || comparisonMatch.sha256_hash || comparisonMatch.sha256}
-                      onSelectNode={(selectedNode) => {
-                        setComparisonMatch({
-                          sha256: selectedNode.sha256_hash || selectedNode.Sha256Hash,
-                          creator: selectedNode.creator_address || selectedNode.CreatorAddress,
-                          timestamp: selectedNode.timestamp || selectedNode.Timestamp,
-                          phash: selectedNode.phash || selectedNode.PHash,
-                          ipfsCid: selectedNode.ipfs_cid || selectedNode.IpfsCid,
-                          aiTool: selectedNode.ai_tool || selectedNode.AiTool,
-                          mediaIpfsUrl: selectedNode.media_ipfs_url || selectedNode.MediaIpfsUrl,
-                          mediaS3Url: selectedNode.media_s3_url || selectedNode.MediaS3Url,
-                          allowAiTraining: selectedNode.allow_ai_training || selectedNode.AllowAiTraining,
-                          mediaType: selectedNode.media_type || selectedNode.MediaType
-                        })
-                      }}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center p-4 text-xs text-[var(--text-3)] bg-[var(--bg-2)] border border-[var(--border)] rounded-xl">No lineage tracking available.</div>
-              )}
-            </div>
 
             {/* Temporal Integrity & Deepfake Sync */}
             {(comparisonMatch.temporalIntegrity !== undefined || comparisonMatch.mediaType === 'video') && (
@@ -602,16 +334,6 @@ function MatchCard({ result, onSelect, isEarliest }) {
           {(result.isPublisherVerified || result.is_publisher_verified) && (
             <Badge variant="success" className="ml-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border-blue-500/20 flex items-center gap-1 font-bold">
               ✓ Verified Source: {result.publisherName || result.publisher_name || 'Official Outlet'}
-            </Badge>
-          )}
-          {(result.publisherFlagCount || result.publisher_flag_count) > 0 && (
-            <Badge variant="danger" className="ml-1 bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/30 flex items-center gap-1 font-bold">
-              ⚠️ Verified Dispute Alert
-            </Badge>
-          )}
-          {(result.flagCount || result.flag_count) > 0 && !(result.publisherFlagCount || result.publisher_flag_count) && (
-            <Badge variant="danger" className="ml-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/20 flex items-center gap-1">
-              <Flag size={10} className="text-red-400" /> {(result.flagCount || result.flag_count)} {(result.flagCount || result.flag_count) === 1 ? 'Dispute' : 'Disputes'}
             </Badge>
           )}
           {(result.consensusCount || result.consensus_count) > 1 && (

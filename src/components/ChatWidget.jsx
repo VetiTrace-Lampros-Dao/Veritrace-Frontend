@@ -77,8 +77,12 @@ export default function ChatWidget() {
     setInputValue('')
     setIsLoading(true)
 
+    const botMessageId = `bot-${Date.now()}`
+    let messageAdded = false
+    let accumulatedText = ''
+
     try {
-      const response = await fetch(`${RAG_BOT_API.replace(/\/$/, '')}/chat`, {
+      const response = await fetch(`${RAG_BOT_API.replace(/\/$/, '')}/chat/stream`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -90,16 +94,101 @@ export default function ChatWidget() {
         throw new Error(`HTTP ${response.status}`)
       }
 
-      const data = await response.json()
-      
-      const botMessage = {
-        id: `bot-${Date.now()}`,
-        text: data.response || "I couldn't process that request. Please try again.",
-        sender: 'bot',
-        timestamp: new Date().toISOString(),
+      if (!response.body) {
+        throw new Error('Streaming response body not available')
       }
 
-      setMessages((prev) => [...prev, botMessage])
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+
+      while (true) {
+        const { value, done } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const events = buffer.split('\n\n')
+        buffer = events.pop() || ''
+
+        for (const rawEvent of events) {
+          const dataLines = rawEvent
+            .split('\n')
+            .filter((line) => line.startsWith('data:'))
+            .map((line) => line.slice(5).trim())
+
+          if (!dataLines.length) continue
+
+          let eventObj
+          try {
+            eventObj = JSON.parse(dataLines.join('\n'))
+          } catch {
+            continue
+          }
+
+          if (eventObj.type === 'tool_start') {
+            const toolName = eventObj.tool || 'Processing'
+            setMessages((prev) => {
+              if (!messageAdded) {
+                messageAdded = true
+                return [
+                  ...prev,
+                  {
+                    id: botMessageId,
+                    text: '',
+                    sender: 'bot',
+                    timestamp: new Date().toISOString(),
+                    toolStatus: toolName,
+                  },
+                ]
+              }
+              return prev.map((msg) =>
+                msg.id === botMessageId ? { ...msg, toolStatus: toolName } : msg
+              )
+            })
+          } else if (eventObj.type === 'tool_end') {
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMessageId ? { ...msg, toolStatus: null } : msg
+              )
+            )
+          } else if (eventObj.type === 'token') {
+            accumulatedText += eventObj.content
+            const currentText = accumulatedText
+            setMessages((prev) => {
+              if (!messageAdded) {
+                messageAdded = true
+                return [
+                  ...prev,
+                  {
+                    id: botMessageId,
+                    text: currentText,
+                    sender: 'bot',
+                    timestamp: new Date().toISOString(),
+                    toolStatus: null,
+                  },
+                ]
+              }
+              return prev.map((msg) =>
+                msg.id === botMessageId
+                  ? { ...msg, text: currentText, toolStatus: null }
+                  : msg
+              )
+            })
+          } else if (eventObj.type === 'error') {
+            throw new Error(eventObj.message || 'Stream error')
+          }
+        }
+      }
+
+      if (!accumulatedText && !messageAdded) {
+        const botMessage = {
+          id: botMessageId,
+          text: "I couldn't process that request. Please try again.",
+          sender: 'bot',
+          timestamp: new Date().toISOString(),
+        }
+        setMessages((prev) => [...prev, botMessage])
+      }
     } catch (err) {
       console.error('Chat bot error:', err)
       const errorMessage = {
@@ -243,7 +332,15 @@ export default function ChatWidget() {
                       {isUser ? (
                         <p className="leading-relaxed select-text">{msg.text}</p>
                       ) : (
-                        <div className="select-text space-y-1">{formatMessageText(msg.text)}</div>
+                        <div className="select-text space-y-1">
+                          {msg.toolStatus && (
+                            <div className="flex items-center gap-1.5 text-[11px] text-[var(--accent)] mb-1.5 font-medium italic">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] animate-ping" />
+                              <span>{msg.toolStatus}...</span>
+                            </div>
+                          )}
+                          {formatMessageText(msg.text)}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -251,7 +348,7 @@ export default function ChatWidget() {
               })}
 
               {/* Bouncing Loader */}
-              {isLoading && (
+              {isLoading && messages[messages.length - 1]?.sender === 'user' && (
                 <div className="flex justify-start items-start gap-2">
                   <div className="w-6 h-6 rounded-md bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex items-center justify-center text-[var(--accent)] shrink-0">
                     <Bot size={12} />

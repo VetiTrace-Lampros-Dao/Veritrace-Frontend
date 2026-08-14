@@ -472,7 +472,7 @@ export default function RegisterPage() {
             <CardBody className="text-xs leading-relaxed text-[var(--text-2)]">
               <div className="flex flex-col gap-3">
                 <InfoRow label="On-Chain" color="var(--accent)" items={['SHA-256 hash (bytes32)', 'Wallet address (msg.sender)', 'Block timestamp', 'AI tool attribution']} />
-                <InfoRow label="Hash Engine (BoltDB)" color="var(--accent-2)" items={['SHA-256 hash', 'Perceptual hash units', 'File content (for verification)', 'Asset metadata']} />
+                <InfoRow label="Hash Engine" color="var(--accent-2)" items={['SHA-256 hash', 'Perceptual hash units', 'File content (for verification)', 'Asset metadata']} />
                 <InfoRow label="Backend (Postgres/Qdrant)" color="var(--success-text, #4CAF50)" items={['Event-sourced metadata', 'pHash vectors (64-dim)', 'Redis exact-match cache']} />
               </div>
             </CardBody>

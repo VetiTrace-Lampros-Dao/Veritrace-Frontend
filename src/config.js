@@ -14,7 +14,7 @@
 
 /** 
  * Hash Engine API — Handles file upload, SHA-256 computation, and 
- * perceptual hashing. Built in Go with BoltDB local storage.
+ * perceptual hashing. Built in Go.
  * Endpoints: POST /api/v1/register, POST /api/v1/verify
  */
 export const HASH_ENGINE_API = 'https://api.hash.veritrace.dpkvtrading.online';
@@ -29,9 +29,9 @@ export const CORE_BACKEND_API = 'https://api.veritrace.dpkvtrading.online';
 /**
  * RAG Help Bot API — Orchestrator API for natural language assistance,
  * query resolution, on-chain lookup, and team notifications.
- * Endpoint: POST /chat
+ * Endpoint: POST /chat/stream
  */
-export const RAG_BOT_API = import.meta.env.VITE_RAG_BOT_API || 'https://rag-bot-1-15kz.onrender.com';
+export const RAG_BOT_API = import.meta.env.VITE_RAG_BOT_API || 'https://rag-bot-7sth.onrender.com';
 
 // ─────────────────────────────────────────────────────────────
 // Smart Contract (Arbitrum Sepolia)
