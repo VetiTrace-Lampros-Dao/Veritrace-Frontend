@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, Fragment } from 'react'
 import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence, useScroll, useTransform, useMotionValue, useSpring, useInView, useReducedMotion } from 'framer-motion'
@@ -11,10 +11,9 @@ import { Badge } from '../components/ui/badge'
 import { CounterUp } from '../components/aceternity/CounterUp'
 import { ParticleField } from '../components/aceternity/ParticleField'
 import { SpotlightCard } from '../components/aceternity/SpotlightCard'
-import { BeamLine } from '../components/aceternity/BeamLine'
 import { AnimatedArbitrumBadge, AnimatedNetworkBadge } from '../components/ArbitrumLogo'
 import { ScrollReveal, ScrollRevealGroup } from '../components/ui/scroll-reveal'
-import { FilePlus, Search, Shield, ArrowRight, Upload, FingerprintPattern as Fingerprint, Wallet, CircleCheck as CheckCircle2, Database, Sparkles, Zap, Eye, Link2, Pin, GitBranch, ChevronRight, ChevronLeft, ChevronDown, Image as ImageIcon, Video, FileText, Play, Radio, Globe, Lock } from 'lucide-react'
+import { FilePlus, Search, Shield, ArrowRight, Upload, FingerprintPattern as Fingerprint, Wallet, CircleCheck as CheckCircle2, Database, Sparkles, Zap, Eye, Link2, Pin, GitBranch, ChevronDown, Image as ImageIcon, Video, FileText, Play, Radio, Globe, Lock } from 'lucide-react'
 import { SUPPORTED_FILES, CONTRACT_ADDRESS, ARBITRUM_SEPOLIA, CORE_BACKEND_API } from '../config'
 import { ethers } from 'ethers'
 import { cn } from '@/lib/utils'
@@ -312,11 +311,50 @@ function SectionDivider() {
   )
 }
 
+/* ─── Data for the on-chain verification workflow chain ─── */
+const WORKFLOW_STEPS = [
+  { Icon: Upload, label: 'Upload', desc: 'File dropped', color: 'var(--accent)' },
+  { Icon: Fingerprint, label: 'Fingerprint', desc: 'SHA-256 + pHash', color: 'var(--accent-2)' },
+  { Icon: Pin, label: 'Pin to IPFS', desc: 'Permanent storage', color: 'var(--accent-dark)' },
+  { Icon: Wallet, label: 'Sign Tx', desc: 'MetaMask confirm', color: 'var(--success-text)' },
+  { Icon: Globe, label: 'Index', desc: 'Go backend', color: 'var(--success-text)' },
+  { Icon: CheckCircle2, label: 'Verified', desc: 'On-chain proof', color: 'var(--success-text)' },
+]
+
 export default function HomePage() {
   const [stats, setStats] = useState({ registered: 0, verifications: 0, onchain: 0, loading: true })
   const [searchFilter, setSearchFilter] = useState('all')
   const heroRef = useRef(null)
   const prefersReducedMotion = useReducedMotion()
+
+  // Workflow chain animation: walks node → connector → node → … → node 6, then loops back to node 1.
+  // `flowStep` is a single phase counter (0..10 for 6 nodes/5 connectors) so exactly one segment
+  // is ever "live" at a time — even phases light a node, odd phases animate the connector after it.
+  const [flowStep, setFlowStep] = useState(0)
+  const activeWorkflowNode = prefersReducedMotion ? -1 : Math.floor(flowStep / 2)
+  const activeWorkflowConnector = prefersReducedMotion ? -1 : (flowStep % 2 === 1 ? (flowStep - 1) / 2 : -1)
+
+  useEffect(() => {
+    if (prefersReducedMotion) return
+
+    const NODE_MS = 850
+    const CONNECTOR_MS = 550
+    const totalPhases = WORKFLOW_STEPS.length * 2 - 1 // node,conn,node,conn,...,node
+    let phase = 0
+    let timeoutId = null
+
+    const scheduleNext = () => {
+      const isNodePhase = phase % 2 === 0
+      timeoutId = setTimeout(() => {
+        phase = (phase + 1) % totalPhases
+        setFlowStep(phase)
+        scheduleNext()
+      }, isNodePhase ? NODE_MS : CONNECTOR_MS)
+    }
+
+    scheduleNext()
+    return () => clearTimeout(timeoutId)
+  }, [prefersReducedMotion])
   const { scrollYProgress: heroScrollProgress } = useScroll({
     target: heroRef,
     offset: ['start start', 'end start'],
@@ -487,30 +525,17 @@ export default function HomePage() {
           </div>
 
           <ParallaxSection speed={0.06}>
-            <Card className="p-8 overflow-hidden relative card-hover-glow">
+            <Card className="p-6 sm:p-8 xl:p-10 overflow-hidden relative card-hover-glow">
               <ParticleField density={28} />
 
-              {/* Workflow nodes */}
-              <div className="relative grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-0">
-                <WorkflowNode icon={<Upload size={24} />} label="Upload" desc="File dropped" color="var(--accent)" step={1} />
-                <WorkflowConnector />
-                <WorkflowNode icon={<Fingerprint size={24} />} label="Fingerprint" desc="SHA-256 + pHash" color="var(--accent-2)" step={2} />
-                <WorkflowConnector />
-                <WorkflowNode icon={<Pin size={24} />} label="Pin to IPFS" desc="Permanent storage" color="var(--accent-dark)" step={3} />
-              </div>
-
-              <div className="hidden md:block h-8" />
-
-              <div className="relative grid grid-cols-1 md:grid-cols-5 gap-4 md:gap-0">
-                <WorkflowNode icon={<Wallet size={24} />} label="Sign Tx" desc="MetaMask confirm" color="var(--success-text)" step={4} />
-                <WorkflowConnector />
-                <WorkflowNode icon={<Globe size={24} />} label="Index" desc="Go backend" color="var(--success-text)" step={5} />
-                <WorkflowConnector />
-                <WorkflowNode icon={<CheckCircle2 size={24} />} label="Verified" desc="On-chain proof" color="var(--success-text)" step={6} />
-              </div>
-
-              <div className="hidden md:block mt-6">
-                <BeamLine duration={3} />
+              {/* Workflow nodes — one continuous chain, no matter how it wraps */}
+              <div className="relative flex flex-col xl:flex-row xl:items-start">
+                {WORKFLOW_STEPS.map((s, i) => (
+                  <Fragment key={s.label}>
+                    <WorkflowNode icon={<s.Icon size={24} />} label={s.label} desc={s.desc} color={s.color} step={i + 1} isActive={i === activeWorkflowNode} />
+                    {i < WORKFLOW_STEPS.length - 1 && <WorkflowConnector isActive={i === activeWorkflowConnector} />}
+                  </Fragment>
+                ))}
               </div>
             </Card>
           </ParallaxSection>
@@ -858,26 +883,32 @@ function FeatureCard({ to, href, icon, color, title, description, cta }) {
   return <a href={href} target="_blank" rel="noopener noreferrer" className="no-underline">{content}</a>
 }
 
-function WorkflowNode({ icon, label, desc, color, step }) {
+function WorkflowNode({ icon, label, desc, color, step, isActive }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-      whileInView={{ opacity: 1, scale: 1, y: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5, delay: step * 0.08, ease: [0.22, 1, 0.36, 1] }}
-      whileHover={{ scale: 1.05, y: -4 }}
-      className="flex flex-col items-center text-center relative z-10"
+      className="relative z-10 flex items-center gap-4 xl:flex-col xl:items-center xl:gap-0 xl:w-[148px] xl:shrink-0 xl:text-center"
     >
-      <div className="relative">
+      <div className="relative shrink-0">
         <motion.div
-          className="w-14 h-14 rounded-2xl flex items-center justify-center glow-pulse"
+          className="w-14 h-14 rounded-2xl flex items-center justify-center"
           style={{ background: `color-mix(in srgb, ${color} 15%, transparent)`, color, border: `1px solid color-mix(in srgb, ${color} 40%, transparent)` }}
-          whileHover={{ boxShadow: `0 0 24px color-mix(in srgb, ${color} 50%, transparent)` }}
+          animate={{
+            scale: isActive ? [1, 1.1, 1.02] : 1,
+            boxShadow: isActive
+              ? [`0 0 0px color-mix(in srgb, ${color} 0%, transparent)`, `0 0 28px color-mix(in srgb, ${color} 70%, transparent)`, `0 0 12px color-mix(in srgb, ${color} 35%, transparent)`]
+              : '0 0 0px transparent',
+          }}
+          whileHover={{ scale: 1.08, boxShadow: `0 0 24px color-mix(in srgb, ${color} 50%, transparent)` }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
         >
           {icon}
         </motion.div>
         <motion.div
-          className="absolute -top-1 -right-1 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white"
+          className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center text-white ring-2 ring-[var(--surface)]"
           style={{ background: color }}
           initial={{ scale: 0 }}
           whileInView={{ scale: 1 }}
@@ -887,29 +918,43 @@ function WorkflowNode({ icon, label, desc, color, step }) {
           {step}
         </motion.div>
       </div>
-      <div className="mt-2 font-bold text-sm text-[var(--text)]">{label}</div>
-      <div className="text-[11px] text-[var(--text-3)]">{desc}</div>
+      <div className="xl:mt-2.5">
+        <div className="font-bold text-sm transition-colors duration-300" style={{ color: isActive ? color : 'var(--text)' }}>{label}</div>
+        <div className="text-[11px] text-[var(--text-3)]">{desc}</div>
+      </div>
     </motion.div>
   )
 }
 
-function WorkflowConnector({ reverse }) {
+/* Connects two adjacent WorkflowNodes with an animated dashed line + traveling dot.
+   Renders vertically while steps stack in a column (below xl), and horizontally once
+   they sit in a single row (xl+) — so every step is joined, with no gaps at any width.
+   The dot only plays while `isActive` is true, i.e. it's this segment's turn in the chain. */
+function WorkflowConnector({ isActive }) {
+  const lineStyle = { borderColor: isActive ? 'var(--accent)' : 'var(--border)' }
   return (
-    <div className="hidden md:flex items-center justify-center w-full px-2">
-      <div className="w-full relative flex items-center">
-        <div className="w-full h-0 border-t-2 border-dashed border-[var(--border)]" />
-        <motion.div
-          className="absolute top-1/2 -translate-y-1/2 text-[var(--accent)]"
-          initial={reverse ? { left: '100%', opacity: 0 } : { left: '0%', opacity: 0 }}
-          animate={
-            reverse
-              ? { left: ['100%', '0%', '0%'], opacity: [0, 1, 0, 0] }
-              : { left: ['0%', '100%', '100%'], opacity: [0, 1, 0, 0] }
-          }
-          transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-        >
-          {reverse ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
-        </motion.div>
+    <div className="relative flex-shrink-0 flex items-center justify-center w-full h-9 pl-7 xl:h-auto xl:w-auto xl:flex-1 xl:mt-7 xl:mx-1 xl:pl-0">
+      <div className="xl:hidden relative w-0 h-full border-l-2 border-dashed transition-colors duration-300" style={lineStyle}>
+        {isActive && (
+          <motion.span
+            key="v"
+            className="absolute left-1/2 w-1.5 h-1.5 rounded-full -translate-x-1/2 -translate-y-1/2 bg-[var(--accent)]"
+            initial={{ top: '0%', opacity: 0 }}
+            animate={{ top: '100%', opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+          />
+        )}
+      </div>
+      <div className="hidden xl:block relative w-full h-0 border-t-2 border-dashed transition-colors duration-300" style={lineStyle}>
+        {isActive && (
+          <motion.span
+            key="h"
+            className="absolute top-1/2 w-1.5 h-1.5 rounded-full -translate-y-1/2 -translate-x-1/2 bg-[var(--accent)]"
+            initial={{ left: '0%', opacity: 0 }}
+            animate={{ left: '100%', opacity: [0, 1, 1, 0] }}
+            transition={{ duration: 0.5, ease: 'easeInOut' }}
+          />
+        )}
       </div>
     </div>
   )
