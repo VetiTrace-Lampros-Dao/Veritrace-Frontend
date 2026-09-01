@@ -31,7 +31,7 @@ const variantStyles = {
   success: { background: 'linear-gradient(135deg, var(--accent), #0284C7)', color: '#ffffff' },
   outline: { borderColor: 'var(--border-2)', color: 'var(--text-2)' },
   ghost: { color: 'var(--text-2)' },
-  danger: { background: 'linear-gradient(135deg, #E53935, #FF6B6B)' },
+  danger: { background: 'linear-gradient(135deg, #E53935, var(--danger-text))' },
   glass: { color: 'var(--text)' },
 }
 

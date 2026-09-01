@@ -5,9 +5,9 @@ import { motion } from 'framer-motion'
 const icons = { info: Info, success: CheckCircle2, warning: AlertTriangle, danger: XCircle }
 const styles = {
   info: 'bg-[var(--arb-bg)] text-[var(--accent)] border-[var(--arb-border)]',
-  success: 'bg-[var(--success-bg)] text-[var(--success-text, #4CAF50)] border-[var(--success-border)]',
-  warning: 'bg-[rgba(255,155,0,0.08)] text-[#FF9B00] border-[rgba(255,155,0,0.25)]',
-  danger: 'bg-[var(--danger-bg)] text-[#FF4D4D] border-[var(--danger-border)]',
+  success: 'bg-[var(--success-bg)] text-[var(--success-text)] border-[var(--success-border)]',
+  warning: 'bg-[rgba(255,155,0,0.08)] text-[var(--warning-text)] border-[rgba(255,155,0,0.25)]',
+  danger: 'bg-[var(--danger-bg)] text-[var(--danger-text)] border-[var(--danger-border)]',
 }
 
 export function Alert({ variant = 'info', children, className }) {

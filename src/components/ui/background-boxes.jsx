@@ -2,7 +2,7 @@ import React, { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 
-const colors = ['var(--accent)', 'var(--success-text, #4CAF50)', 'var(--accent-2)', 'var(--accent-dark)', '#B388FF']
+const colors = ['var(--accent)', 'var(--success-text)', 'var(--accent-2)', 'var(--accent-dark)', '#B388FF']
 
 /** A contained, performance-friendly background-boxes effect. */
 export const BoxesCore = ({ className, rows = 16, cols = 22, ...props }) => {

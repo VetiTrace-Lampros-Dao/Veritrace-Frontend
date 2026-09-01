@@ -94,7 +94,7 @@ export default function LibraryPage() {
               {/* Dual-ring animated loader with Arbitrum logo */}
               <div className="relative w-24 h-24 flex items-center justify-center mb-6">
                 <div className="loading-orb-outer absolute inset-0 rounded-full" style={{ border: '3px solid var(--border)', borderTopColor: 'var(--accent)', borderRightColor: 'var(--accent)' }} />
-                <div className="loading-orb-inner absolute inset-2 rounded-full" style={{ border: '3px solid var(--border)', borderBottomColor: 'var(--success-text, #4CAF50)', borderLeftColor: 'var(--success-text, #4CAF50)' }} />
+                <div className="loading-orb-inner absolute inset-2 rounded-full" style={{ border: '3px solid var(--border)', borderBottomColor: 'var(--success-text)', borderLeftColor: 'var(--success-text)' }} />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <ArbitrumLogo size={28} animated />
                 </div>
@@ -146,7 +146,7 @@ export default function LibraryPage() {
       <Modal open={!!selectedAsset} onClose={() => setSelectedAsset(null)} maxWidth="max-w-2xl">
         {selectedAsset && (
           <>
-            <ModalHeader title="Registered Asset Details" onClose={() => setSelectedAsset(null)} icon={<Shield size={18} className="text-[var(--success-text, #4CAF50)]" />} />
+            <ModalHeader title="Registered Asset Details" onClose={() => setSelectedAsset(null)} icon={<Shield size={18} className="text-[var(--success-text)]" />} />
             <div className="p-4 sm:p-5 flex flex-col gap-3 overflow-y-auto">
               <div className="relative w-full h-44 sm:h-52 bg-[var(--bg-2)] rounded-xl overflow-hidden flex items-center justify-center border border-[var(--border)]" onContextMenu={(e) => e.preventDefault()}>
                 {modalLoading ? (

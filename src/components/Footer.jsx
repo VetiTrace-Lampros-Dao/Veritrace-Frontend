@@ -100,16 +100,16 @@ export default function Footer() {
       </div>
 
       {/* Giant Bottom Highlight Brand Title */}
-      <div 
+      <div
         onClick={() => setIsHighlighted(!isHighlighted)}
-        className="w-full flex justify-center overflow-hidden h-[9vw] cursor-pointer select-none mt-8 border-t border-white/10 pt-8 relative animate-duration-500"
+        className="w-full flex justify-center overflow-hidden h-[9vw] cursor-pointer select-none mt-8 border-t border-[var(--border)] pt-8 relative animate-duration-500"
       >
-        <div 
+        <div
           className={cn(
-            "text-[15vw] font-black leading-[0.75] tracking-tighter transition-all duration-700 ease-out select-none",
-            isHighlighted 
-              ? "text-white [text-shadow:0_0_30px_rgba(255,255,255,0.75),0_0_60px_rgba(255,255,255,0.4)] opacity-100" 
-              : "text-white opacity-10 hover:opacity-20"
+            "text-[15vw] font-black leading-[0.75] tracking-tighter transition-all duration-700 ease-out select-none text-[var(--footer-text)]",
+            isHighlighted
+              ? "[text-shadow:0_0_30px_rgba(var(--accent-rgb),0.6),0_0_60px_rgba(var(--accent-rgb),0.3)] opacity-100"
+              : "opacity-10 hover:opacity-20"
           )}
         >
           VERITRACE

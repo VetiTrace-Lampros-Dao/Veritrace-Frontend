@@ -104,9 +104,9 @@ export function AnimatedNetworkBadge({ text }) {
           animate={{ scale: [1, 1.8, 1], opacity: [0.6, 0, 0.6] }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <span className="w-2 h-2 rounded-full bg-[var(--success-text, #4CAF50)] shadow-[0_0_8px_var(--success-text, #4CAF50)] flex-shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-[var(--success-text)] shadow-[0_0_8px_var(--success-text)] flex-shrink-0" />
       </div>
-      <span style={{ color: 'var(--success-text, #4CAF50)' }}>{text}</span>
+      <span style={{ color: 'var(--success-text)' }}>{text}</span>
     </div>
   )
 }

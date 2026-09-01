@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { useTheme } from '../providers/ExperienceProvider'
 
@@ -11,18 +12,23 @@ import { useTheme } from '../providers/ExperienceProvider'
 export function ParticleField({ className, density = 50, color = '' }) {
   const canvasRef = useRef(null)
   const { theme } = useTheme()
+  const prefersReducedMotion = useReducedMotion()
 
   useEffect(() => {
+    if (prefersReducedMotion) return
     const canvas = canvasRef.current
     if (!canvas) return
     const ctx = canvas.getContext('2d')
     let raf = null
     let particles = []
+    const isMobile = window.innerWidth < 768
+    const effectiveDensity = isMobile ? Math.round(density * 0.5) : density
+    const linkDistance = isMobile ? 80 : 120
 
-    // Use theme colors
-    const r = theme === 'dark' ? 155 : 111
-    const g = theme === 'dark' ? 125 : 78
-    const b = theme === 'dark' ? 255 : 55
+    // Use theme colors — matches the brand accent (violet) in both modes
+    const r = theme === 'dark' ? 155 : 124
+    const g = theme === 'dark' ? 125 : 92
+    const b = theme === 'dark' ? 255 : 252
     const opacityBase = theme === 'dark' ? 0.5 : 0.25
     const fillStyleStr = `rgba(${r}, ${g}, ${b}, ${theme === 'dark' ? '0.37' : '0.25'})`
 
@@ -31,7 +37,7 @@ export function ParticleField({ className, density = 50, color = '' }) {
       if (!parent) return
       canvas.width = parent.offsetWidth
       canvas.height = parent.offsetHeight
-      particles = Array.from({ length: density }, () => ({
+      particles = Array.from({ length: effectiveDensity }, () => ({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
         vx: (Math.random() - 0.5) * 0.3,
@@ -58,11 +64,11 @@ export function ParticleField({ className, density = 50, color = '' }) {
           const dx = p.x - particles[j].x
           const dy = p.y - particles[j].y
           const dist = Math.sqrt(dx * dx + dy * dy)
-          if (dist < 120) {
+          if (dist < linkDistance) {
             ctx.beginPath()
             ctx.moveTo(p.x, p.y)
             ctx.lineTo(particles[j].x, particles[j].y)
-            const alpha = (opacityBase * (1 - dist / 120)).toFixed(2)
+            const alpha = (opacityBase * (1 - dist / linkDistance)).toFixed(2)
             ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`
             ctx.lineWidth = 0.5
             ctx.stroke()
@@ -93,7 +99,9 @@ export function ParticleField({ className, density = 50, color = '' }) {
       observer.disconnect()
       window.removeEventListener('resize', resize)
     }
-  }, [density, color, theme])
+  }, [density, color, theme, prefersReducedMotion])
+
+  if (prefersReducedMotion) return null
 
   return (
     <canvas

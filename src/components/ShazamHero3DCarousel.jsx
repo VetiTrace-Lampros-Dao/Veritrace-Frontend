@@ -47,7 +47,7 @@ const CAROUSEL_CARDS = [
     id: 'arcface',
     title: 'ArcFace Biometric',
     tag: 'DEEPFAKE DETECTOR',
-    badgeColor: '#FF4D4D',
+    badgeColor: 'var(--danger-text)',
     cardBg: 'linear-gradient(145deg, #7F1D1D 0%, #450A0A 100%)',
     bgGlow: 'rgba(255, 77, 77, 0.4)',
     ambientBg: 'radial-gradient(ellipse at 70% 50%, rgba(255, 77, 77, 0.22) 0%, rgba(183, 28, 28, 0.12) 45%, transparent 75%)',
@@ -60,7 +60,7 @@ const CAROUSEL_CARDS = [
     id: 'wav2vec2',
     title: 'wav2vec2 Voice Print',
     tag: 'AUDIO CLONE DETECTOR',
-    badgeColor: '#FF9B00',
+    badgeColor: 'var(--warning-text)',
     cardBg: 'linear-gradient(145deg, #7C2D12 0%, #451A03 100%)',
     bgGlow: 'rgba(255, 155, 0, 0.4)',
     ambientBg: 'radial-gradient(ellipse at 70% 50%, rgba(255, 155, 0, 0.22) 0%, rgba(191, 54, 12, 0.12) 45%, transparent 75%)',
@@ -74,6 +74,10 @@ const CAROUSEL_CARDS = [
 export default function ShazamHero3DCarousel() {
   const [activeIndex, setActiveIndex] = useState(0)
   const stackContainerRef = useRef(null)
+  const sectionRef = useRef(null)
+  const activeIndexRef = useRef(0)
+  const isEngagedRef = useRef(false)
+  const wheelLockedRef = useRef(false)
 
   // Circular Index Navigation Helper (Circular Doubly-Linked List behavior)
   const getCircularIndex = useCallback((index) => {
@@ -88,6 +92,52 @@ export default function ShazamHero3DCarousel() {
   const prevCard = useCallback(() => {
     setActiveIndex((prev) => getCircularIndex(prev - 1))
   }, [getCircularIndex])
+
+  // Keep a ref mirror of activeIndex so the wheel listener (added once) always sees the latest value
+  useEffect(() => { activeIndexRef.current = activeIndex }, [activeIndex])
+
+  // ── Scroll-jack: while this section is substantially in view, a mouse-wheel/trackpad
+  // scroll steps through the 5 cards one at a time instead of scrolling the page. Once the
+  // user is on the last card, scrolling down releases the page scroll normally (and symmetrically
+  // for scrolling back up into the first card).
+  useEffect(() => {
+    const section = sectionRef.current
+    if (!section) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => { isEngagedRef.current = entry.isIntersecting },
+      { threshold: 0.6 }
+    )
+    observer.observe(section)
+
+    const WHEEL_LOCK_MS = 550
+    const lastCardIndex = CAROUSEL_CARDS.length - 1
+
+    const handleWheel = (e) => {
+      if (!isEngagedRef.current) return
+      if (Math.abs(e.deltaY) < 8) return // ignore noise
+
+      const goingDown = e.deltaY > 0
+      const current = activeIndexRef.current
+      const canStepDown = goingDown && current < lastCardIndex
+      const canStepUp = !goingDown && current > 0
+
+      if (!canStepDown && !canStepUp) return // at an edge card — let the real page scroll through
+
+      e.preventDefault()
+      if (wheelLockedRef.current) return // mid-transition — swallow extra ticks from this same gesture
+
+      wheelLockedRef.current = true
+      setActiveIndex((prev) => Math.min(lastCardIndex, Math.max(0, prev + (goingDown ? 1 : -1))))
+      setTimeout(() => { wheelLockedRef.current = false }, WHEEL_LOCK_MS)
+    }
+
+    window.addEventListener('wheel', handleWheel, { passive: false })
+    return () => {
+      observer.disconnect()
+      window.removeEventListener('wheel', handleWheel)
+    }
+  }, [])
 
   // Drag/Touch tracking to scrub across 3D stack cards
   const handleScrubAtX = useCallback((clientX) => {
@@ -117,7 +167,7 @@ export default function ShazamHero3DCarousel() {
   const activeCard = CAROUSEL_CARDS[activeIndex]
 
   return (
-    <div className="relative w-full py-12 overflow-hidden transition-all duration-700 ease-out select-none">
+    <div ref={sectionRef} className="relative w-full py-12 overflow-hidden transition-all duration-700 ease-out select-none">
       {/* ── Dynamic Ambient Background Glow (Morphs with Active Card Theme) ── */}
       <div
         className="absolute inset-0 pointer-events-none transition-all duration-700 ease-out opacity-90"

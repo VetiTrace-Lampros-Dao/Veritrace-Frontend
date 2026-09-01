@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform, animate } from 'framer-motion'
+import { motion, useMotionValue, useTransform, animate, useReducedMotion } from 'framer-motion'
 import { useEffect, useRef, useCallback } from 'react'
 import { useIntegrityTone, useTheme } from './providers/ExperienceProvider'
 import { AuroraBackground } from './ui/aurora-background'
@@ -27,10 +27,10 @@ function DotMatrix({ theme }) {
       const cx = canvas.width / 2
       const cy = canvas.height / 2
 
-      // Light mode: warm coffee dots, dark mode: purple dots
+      // Both modes: violet dots, lighter alpha in light mode
       const dotColor = theme === 'dark'
         ? 'rgba(155, 125, 255, 0.11)'
-        : 'rgba(111, 78, 55, 0.08)'
+        : 'rgba(124, 92, 252, 0.08)'
 
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
@@ -104,7 +104,7 @@ function MouseSpotlight({ theme }) {
         height: '520px',
         borderRadius: '50%',
         transform: 'translate3d(-100%, -100%, 0) translate(-50%, -50%)',
-        background: 'radial-gradient(circle, rgba(196,154,108,0.06) 0%, rgba(111,78,55,0.035) 35%, transparent 70%)',
+        background: 'radial-gradient(circle, rgba(184,160,255,0.08) 0%, rgba(124,92,252,0.04) 35%, transparent 70%)',
         opacity: 0,
         transition: 'opacity 0.4s ease',
         zIndex: 0,
@@ -130,11 +130,11 @@ function getOrbConfig(theme, integrityTone) {
       three: { bg: '#5B3FBD', opacity: 0.055 },
     }
   }
-  // Light mode — warm coffee / caramel / amber
+  // Light mode — same violet family as dark, at higher opacity for a light background
   return {
-    one:   { bg: '#A0785A', opacity: 0.18 },   // latte
-    two:   { bg: '#C49A6C', opacity: 0.14 },   // caramel
-    three: { bg: '#8B6914', opacity: 0.10 },   // golden roast
+    one:   { bg: '#9B7DFF', opacity: 0.16 },
+    two:   { bg: '#B8A0FF', opacity: 0.13 },
+    three: { bg: '#7C5CFC', opacity: 0.10 },
   }
 }
 
@@ -142,6 +142,7 @@ function getOrbConfig(theme, integrityTone) {
 export default function AmbientBackground() {
   const { integrityTone } = useIntegrityTone()
   const { theme } = useTheme()
+  const prefersReducedMotion = useReducedMotion()
 
   const orbs = getOrbConfig(theme, integrityTone)
   const isAlert = integrityTone === 'alert'
@@ -167,7 +168,7 @@ export default function AmbientBackground() {
       {/* Orb 1 — primary */}
       <motion.div
         className="ambient-orb ambient-orb-one"
-        animate={{
+        animate={prefersReducedMotion ? {} : {
           x: [0, 80, -30, 0],
           y: [0, 50, 95, 0],
           scale: [1, 1.16, 0.92, 1],
@@ -184,7 +185,7 @@ export default function AmbientBackground() {
       {/* Orb 2 — secondary */}
       <motion.div
         className="ambient-orb ambient-orb-two"
-        animate={{
+        animate={prefersReducedMotion ? {} : {
           x: [0, -70, 45, 0],
           y: [0, 75, 35, 0],
           scale: [1, 0.86, 1.12, 1],
@@ -201,7 +202,7 @@ export default function AmbientBackground() {
       {/* Orb 3 — accent */}
       <motion.div
         className="ambient-orb ambient-orb-three"
-        animate={{
+        animate={prefersReducedMotion ? {} : {
           x: [0, -60, 30, 0],
           y: [0, -45, 55, 0],
           scale: [0.85, 1.08, 0.95, 0.85],
@@ -220,7 +221,7 @@ export default function AmbientBackground() {
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
-            background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(196,154,108,0.04) 0%, transparent 70%)',
+            background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124,92,252,0.05) 0%, transparent 70%)',
             zIndex: 0,
           }}
         />

@@ -285,12 +285,12 @@ export default function ChatWidget() {
               <div className="flex items-center gap-2.5">
                 <div className="relative w-8 h-8 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center text-[var(--accent)] border border-[var(--accent)]/20 shadow-[0_0_12px_rgba(var(--accent-rgb),0.15)]">
                   <Bot size={16} />
-                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#4CAF50] border-2 border-[var(--bg)]" />
+                  <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[var(--success-text)] border-2 border-[var(--bg)]" />
                 </div>
                 <div>
                   <div className="text-xs font-bold text-[var(--text)] flex items-center gap-1.5">
                     VeriTrace Assistant
-                    <span className="flex items-center gap-0.5 text-[8px] font-semibold text-[var(--success-text, #4CAF50)] uppercase bg-[var(--success-text, #4CAF50)]/10 px-1 rounded">RAG</span>
+                    <span className="flex items-center gap-0.5 text-[8px] font-semibold text-[var(--success-text)] uppercase bg-[var(--success-text)]/10 px-1 rounded">RAG</span>
                   </div>
                   <div className="text-[10px] text-[var(--text-3)] flex items-center gap-1">
                     <Sparkles size={8} className="text-[var(--accent)]" />
@@ -466,7 +466,7 @@ export default function ChatWidget() {
         
         {/* Unread indicator */}
         {!isOpen && hasUnread && (
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[var(--success-text, #4CAF50)] border-2 border-white rounded-full animate-pulse" />
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-[var(--success-text)] border-2 border-white rounded-full animate-pulse" />
         )}
       </button>
       </div>

@@ -21,20 +21,20 @@ export function StepIndicator({ steps, currentStep }) {
                 }}
                 className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold border-2 transition-all duration-300',
-                  isCompleted ? 'text-[var(--success-text, #4CAF50)]' : isActive ? 'text-[var(--accent)]' : 'text-[var(--text-4)]'
+                  isCompleted ? 'text-[var(--success-text)]' : isActive ? 'text-[var(--accent)]' : 'text-[var(--text-4)]'
                 )}
               >
                 {isCompleted ? <Check size={14} /> : stepNum}
               </motion.div>
               <span className={cn(
                 'text-xs font-semibold transition-colors duration-200',
-                isCompleted ? 'text-[var(--success-text, #4CAF50)]' : isActive ? 'text-[var(--accent)]' : 'text-[var(--text-4)]'
+                isCompleted ? 'text-[var(--success-text)]' : isActive ? 'text-[var(--accent)]' : 'text-[var(--text-4)]'
               )}>
                 {step}
               </span>
             </div>
             {i < steps.length - 1 && (
-              <div className={cn('w-8 h-0.5 rounded-full transition-colors duration-300', isCompleted ? 'bg-[var(--success-text, #4CAF50)]/50' : 'bg-[var(--border)]')} />
+              <div className={cn('w-8 h-0.5 rounded-full transition-colors duration-300', isCompleted ? 'bg-[var(--success-text)]/50' : 'bg-[var(--border)]')} />
             )}
           </div>
         )

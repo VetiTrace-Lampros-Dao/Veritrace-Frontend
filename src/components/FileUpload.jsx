@@ -110,7 +110,7 @@ export default function FileUpload({ onFileSelected, accept, label }) {
       <AnimatePresence>
         {error && (
           <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} className="mt-3">
-            <div className="flex gap-2 p-3 rounded-xl bg-[var(--danger-bg)] border border-[var(--danger-border)] text-[#FF4D4D] text-sm">
+            <div className="flex gap-2 p-3 rounded-xl bg-[var(--danger-bg)] border border-[var(--danger-border)] text-[var(--danger-text)] text-sm">
               <X size={16} className="flex-shrink-0 mt-0.5" /><div>{error}</div>
             </div>
           </motion.div>

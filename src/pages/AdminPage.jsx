@@ -123,7 +123,7 @@ export default function AdminPage() {
               
               <div>
                 <div className="text-sm font-semibold text-[var(--text-3)] mb-2 uppercase tracking-wider">Current Accumulated Fees</div>
-                <div className="text-5xl font-bold text-[var(--success-text, #4CAF50)]">${balanceUsdc} USDC</div>
+                <div className="text-5xl font-bold text-[var(--success-text)]">${balanceUsdc} USDC</div>
               </div>
 
               <div className="mx-auto w-full max-w-sm">
