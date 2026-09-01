@@ -208,7 +208,7 @@ function WalletButton() {
           aria-expanded={showDropdown}
           aria-label="Open wallet account menu"
         >
-          <span className="w-2 h-2 rounded-full bg-[var(--success-text, #4CAF50)] shadow-[0_0_8px_var(--success-text, #4CAF50)] flex-shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-[var(--success-text)] shadow-[0_0_8px_var(--success-text)] flex-shrink-0" />
           <span className="font-mono font-medium text-[var(--text)] hidden sm:inline">{formatAddress(address)}</span>
           <ArbitrumLogo size={14} />
           <ChevronDown size={12} className={cn('transition-transform text-[var(--text-3)] flex-shrink-0', showDropdown && 'rotate-180')} />
@@ -238,9 +238,9 @@ function WalletButton() {
                 </Link>
                 <button onClick={copyAddress} className="w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-[var(--text-2)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] active:scale-[.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--accent)]">
                   <span className="flex items-center gap-2"><Copy size={15} /> Copy address</span>
-                  {copied ? <Check size={15} className="text-[var(--success-text, #4CAF50)]" /> : <span className="text-[10px] font-mono text-[var(--text-4)]">{formatAddress(address)}</span>}
+                  {copied ? <Check size={15} className="text-[var(--success-text)]" /> : <span className="text-[10px] font-mono text-[var(--text-4)]">{formatAddress(address)}</span>}
                 </button>
-                <button onClick={() => { disconnect(); setShowDropdown(false) }} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-[#FF6B6B] hover:bg-[var(--danger-bg)] active:scale-[.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF4D4D]">
+                <button onClick={() => { disconnect(); setShowDropdown(false) }} className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl text-left text-sm font-medium text-[var(--danger-text)] hover:bg-[var(--danger-bg)] active:scale-[.98] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--danger-text)]">
                   <LogOut size={15} /> Disconnect wallet
                 </button>
               </motion.div>

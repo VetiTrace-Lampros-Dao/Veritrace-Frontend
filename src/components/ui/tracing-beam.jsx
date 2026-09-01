@@ -97,7 +97,7 @@ export const TracingBeam = ({ children, className }) => {
               >
                 <stop stopColor="var(--accent)" stopOpacity="0" />
                 <stop stopColor="var(--accent)" />
-                <stop offset="0.4" stopColor="var(--success-text, #4CAF50)" />
+                <stop offset="0.4" stopColor="var(--success-text)" />
                 <stop offset="1" stopColor="#AE48FF" stopOpacity="0" />
               </motion.linearGradient>
             </defs>

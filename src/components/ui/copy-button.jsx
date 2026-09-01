@@ -23,7 +23,7 @@ export function CopyButton({ text, className, size = 14 }) {
       )}
       title="Copy to clipboard"
     >
-      {copied ? <Check size={size} className="text-[var(--success-text, #4CAF50)]" /> : <Copy size={size} />}
+      {copied ? <Check size={size} className="text-[var(--success-text)]" /> : <Copy size={size} />}
     </button>
   )
 }

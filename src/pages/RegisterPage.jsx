@@ -309,7 +309,7 @@ export default function RegisterPage() {
                           <Meta label="Type" value={hashes.mediaType} />
                           <Meta label="Hash Units" value={hashes.hashCount} />
                           {hashes.aiConfidenceScore !== undefined && hashes.aiConfidenceScore !== null && (
-                            <Meta label="AI Score" value={`${Math.round(maxConf * 100)}%`} color={maxConf > 0.75 ? 'text-[#FF4D4D]' : maxConf > 0.3 ? 'text-[#FF9B00]' : 'text-[var(--success-text, #4CAF50)]'} bold />
+                            <Meta label="AI Score" value={`${Math.round(maxConf * 100)}%`} color={maxConf > 0.75 ? 'text-[var(--danger-text)]' : maxConf > 0.3 ? 'text-[var(--warning-text)]' : 'text-[var(--success-text)]'} bold />
                           )}
                         </div>
                         {hashes.keyframes?.length > 0 && (
@@ -372,7 +372,7 @@ export default function RegisterPage() {
                         <div className="text-center py-4">
                           <div className="relative w-16 h-16 mx-auto flex items-center justify-center mb-3">
                             <div className="loading-orb-outer absolute inset-0 rounded-full" style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)', borderRightColor: 'var(--accent)' }} />
-                            <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text, #4CAF50)', borderLeftColor: 'var(--success-text, #4CAF50)' }} />
+                            <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text)', borderLeftColor: 'var(--success-text)' }} />
                             <ArbitrumLogo size={20} animated />
                           </div>
                           <div className="font-semibold text-sm text-[var(--text)]">Extracting & Hashing...</div>
@@ -387,15 +387,15 @@ export default function RegisterPage() {
                       {error && <Alert variant="danger">{error}</Alert>}
                       <Alert variant="success">Evidence is ready. Review the record, then sign once to publish your proof on-chain.</Alert>
 
-                      <div className={cn("p-3.5 rounded-2xl border transition-all flex flex-col gap-2", showAiRequirement ? "bg-[#FF4D4D]/10 border-[#FF4D4D]/40 shadow-[0_0_15px_rgba(255,77,77,0.15)]" : "bg-[var(--bg-2)] border-[var(--border)]")}>
+                      <div className={cn("p-3.5 rounded-2xl border transition-all flex flex-col gap-2", showAiRequirement ? "bg-[var(--danger-text)]/10 border-[var(--danger-text)]/40 shadow-[0_0_15px_rgba(255,77,77,0.15)]" : "bg-[var(--bg-2)] border-[var(--border)]")}>
                         <label className="text-xs font-bold text-[var(--text)] flex items-center justify-between">
-                          <span className="flex items-center gap-1.5"><Bot size={14} className={showAiRequirement ? "text-[#FF4D4D]" : "text-[var(--accent)]"} /> AI Generator Attribution</span>
-                          {showAiRequirement && <span className="text-[10px] uppercase tracking-wider font-extrabold text-[#FF4D4D] bg-[#FF4D4D]/15 px-2 py-0.5 rounded-full">Action Required</span>}
+                          <span className="flex items-center gap-1.5"><Bot size={14} className={showAiRequirement ? "text-[var(--danger-text)]" : "text-[var(--accent)]"} /> AI Generator Attribution</span>
+                          {showAiRequirement && <span className="text-[10px] uppercase tracking-wider font-extrabold text-[var(--danger-text)] bg-[var(--danger-text)]/15 px-2 py-0.5 rounded-full">Action Required</span>}
                         </label>
                         <Select value={aiCategory} onChange={(e) => { const val = e.target.value; setAiCategory(val); if (val === 'None (Authentic Content)') setAiTool(''); else if (val !== 'Other (Custom Input)') setAiTool(val) }}>
                           {AI_MODELS.map(m => <option key={m} value={m}>{m}</option>)}
                         </Select>
-                        {showAiRequirement && <div className="text-xs text-[#FF4D4D] font-semibold flex items-center gap-1.5 mt-0.5"><AlertTriangle size={14} className="flex-shrink-0" /> AI content detected ({Math.round(maxConf * 100)}% confidence). Select the AI model (e.g. Midjourney, DALL-E, Stable Diffusion) to enable registration.</div>}
+                        {showAiRequirement && <div className="text-xs text-[var(--danger-text)] font-semibold flex items-center gap-1.5 mt-0.5"><AlertTriangle size={14} className="flex-shrink-0" /> AI content detected ({Math.round(maxConf * 100)}% confidence). Select the AI model (e.g. Midjourney, DALL-E, Stable Diffusion) to enable registration.</div>}
                         {aiCategory === 'Other (Custom Input)' && <input type="text" value={aiTool} onChange={(e) => setAiTool(e.target.value)} placeholder="Enter custom AI model name (e.g. Ideogram, Runway Gen-2)" className="w-full mt-1 px-3.5 py-2.5 text-sm rounded-xl bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] outline-none focus:border-[var(--accent)]" />}
                       </div>
 
@@ -426,7 +426,7 @@ export default function RegisterPage() {
                     <motion.div key="signing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="text-center py-8">
                       <div className="relative w-16 h-16 mx-auto flex items-center justify-center mb-3">
                         <div className="loading-orb-outer absolute inset-0 rounded-full" style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)', borderRightColor: 'var(--accent)' }} />
-                        <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text, #4CAF50)', borderLeftColor: 'var(--success-text, #4CAF50)' }} />
+                        <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text)', borderLeftColor: 'var(--success-text)' }} />
                         <ArbitrumLogo size={20} animated />
                       </div>
                       <div className="font-semibold text-sm text-[var(--text)]">Waiting for confirmation...</div>
@@ -436,7 +436,7 @@ export default function RegisterPage() {
 
                   {step === 4 && txResult && (
                     <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-4">
-                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="w-14 h-14 rounded-full bg-[var(--success-bg)] text-[var(--success-text, #4CAF50)] flex items-center justify-center mx-auto mb-3">
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="w-14 h-14 rounded-full bg-[var(--success-bg)] text-[var(--success-text)] flex items-center justify-center mx-auto mb-3">
                         <CheckCircle2 size={28} />
                       </motion.div>
                       <div className="font-bold text-lg mb-1 text-[var(--text)]">Successfully Registered!</div>
@@ -447,7 +447,7 @@ export default function RegisterPage() {
                         <TxRow label="Block" value={txResult.blockNumber?.toString()} />
                         <TxRow label="Status"><Badge variant="success">Confirmed</Badge></TxRow>
                         <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-[var(--border)]">
-                          {txResult.mediaS3Url && <a href={txResult.mediaS3Url?.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${txResult.mediaS3Url.slice(7)}` : txResult.mediaS3Url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-text, #4CAF50)]/10 hover:bg-[var(--success-text, #4CAF50)]/20 text-[var(--success-text, #4CAF50)] rounded-md text-[11px] font-bold border border-[var(--success-text, #4CAF50)]/20 transition-colors"><ExternalLink size={12} /> S3 Media</a>}
+                          {txResult.mediaS3Url && <a href={txResult.mediaS3Url?.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${txResult.mediaS3Url.slice(7)}` : txResult.mediaS3Url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-text)]/10 hover:bg-[var(--success-text)]/20 text-[var(--success-text)] rounded-md text-[11px] font-bold border border-[var(--success-text)]/20 transition-colors"><ExternalLink size={12} /> S3 Media</a>}
                           {txResult.mediaIpfsUrl && <a href={txResult.mediaIpfsUrl?.startsWith('ipfs://') ? `https://gateway.pinata.cloud/ipfs/${txResult.mediaIpfsUrl.slice(7)}` : txResult.mediaIpfsUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] rounded-md text-[11px] font-bold border border-[var(--accent)]/20 transition-colors"><ExternalLink size={12} /> IPFS Media</a>}
                           {txResult.ipfsCid && <a href={`https://gateway.pinata.cloud/ipfs/${txResult.ipfsCid}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-3)] hover:bg-[var(--border)] text-[var(--text-2)] rounded-md text-[11px] font-bold border border-[var(--border)] transition-colors"><ExternalLink size={12} /> IPFS JSON</a>}
                         </div>
@@ -473,7 +473,7 @@ export default function RegisterPage() {
               <div className="flex flex-col gap-3">
                 <InfoRow label="On-Chain" color="var(--accent)" items={['SHA-256 hash (bytes32)', 'Wallet address (msg.sender)', 'Block timestamp', 'AI tool attribution']} />
                 <InfoRow label="Hash Engine" color="var(--accent-2)" items={['SHA-256 hash', 'Perceptual hash units', 'File content (for verification)', 'Asset metadata']} />
-                <InfoRow label="Backend (Postgres/Qdrant)" color="var(--success-text, #4CAF50)" items={['Event-sourced metadata', 'pHash vectors (64-dim)', 'Redis exact-match cache']} />
+                <InfoRow label="Backend (Postgres/Qdrant)" color="var(--success-text)" items={['Event-sourced metadata', 'pHash vectors (64-dim)', 'Redis exact-match cache']} />
               </div>
             </CardBody>
           </Card>

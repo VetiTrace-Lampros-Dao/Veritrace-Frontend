@@ -271,8 +271,8 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                 <div className="text-[10px] text-[var(--text-3)] truncate">{comparisonMatch.creator ? `${comparisonMatch.creator.slice(0, 8)}...${comparisonMatch.creator.slice(-6)}` : 'Unknown'} · {comparisonMatch.registeredAt}</div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#FF4D4D]">Pixel Diff Heatmap</div>
-                <div className={`aspect-[4/3] rounded-xl border overflow-hidden flex items-center justify-center cursor-pointer group ${heatmapBase64 ? 'bg-[#FF4D4D]/5 border-[#FF4D4D]/20' : 'bg-[var(--bg-2)] border-dashed border-[var(--border)]'}`} onClick={() => heatmapBase64 && setLightboxOpen(true)}>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-[var(--danger-text)]">Pixel Diff Heatmap</div>
+                <div className={`aspect-[4/3] rounded-xl border overflow-hidden flex items-center justify-center cursor-pointer group ${heatmapBase64 ? 'bg-[var(--danger-text)]/5 border-[var(--danger-text)]/20' : 'bg-[var(--bg-2)] border-dashed border-[var(--border)]'}`} onClick={() => heatmapBase64 && setLightboxOpen(true)}>
                   {heatmapLoading ? (
                     <div className="text-center"><Spinner /><div className="text-[10px] text-[var(--text-3)] mt-1">Analyzing...</div></div>
                   ) : heatmapBase64 ? (
@@ -288,7 +288,7 @@ export default function SearchResults({ results, loading, uploadedFile }) {
             {/* Confidence & Badges */}
             {comparisonMatch.confidenceTier && (
               <div className="flex items-center gap-2 text-xs text-[var(--text-3)]">
-                Confidence: <span className="font-semibold text-[var(--success-text, #4CAF50)]">{comparisonMatch.confidenceScore?.toFixed(0)}% ({comparisonMatch.confidenceTier})</span>
+                Confidence: <span className="font-semibold text-[var(--success-text)]">{comparisonMatch.confidenceScore?.toFixed(0)}% ({comparisonMatch.confidenceTier})</span>
                 {(comparisonMatch.consensusCount || comparisonMatch.consensus_count) > 1 && (
                   <span className="text-emerald-400 font-semibold">🤝 {(comparisonMatch.consensusCount || comparisonMatch.consensus_count)} consensus</span>
                 )}
@@ -378,8 +378,8 @@ export default function SearchResults({ results, loading, uploadedFile }) {
                 <div className="h-[37vh] w-full flex items-center justify-center bg-red-950/20 rounded-xl border border-red-500/30 p-1.5 overflow-hidden shadow-2xl">
                   <img src={heatmapBase64} alt="Heatmap" className="max-h-full max-w-full object-contain rounded-lg" />
                 </div>
-                <span className="text-[#FF4D4D] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-[#FF4D4D] animate-pulse" /> Pixel Diff Heatmap
+                <span className="text-[var(--danger-text)] text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-[var(--danger-text)] animate-pulse" /> Pixel Diff Heatmap
                 </span>
               </div>
             )}
@@ -402,7 +402,7 @@ function MatchCard({ result, onSelect, isEarliest }) {
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} onClick={onSelect} className="flex items-stretch rounded-2xl border border-[var(--border)] bg-[var(--surface)] overflow-hidden cursor-pointer hover:border-[var(--border-2)] hover:shadow-md transition-all group">
-      <div className="w-1 flex-shrink-0" style={{ background: isExact ? 'var(--success-text, #4CAF50)' : isDeepfake ? '#FF4D4D' : '#FF9B00' }} />
+      <div className="w-1 flex-shrink-0" style={{ background: isExact ? 'var(--success-text)' : isDeepfake ? 'var(--danger-text)' : 'var(--warning-text)' }} />
       <div className="flex items-center justify-center p-3 flex-shrink-0">
         {!previewUrl ? <div className="w-[140px] h-[95px] rounded-lg border border-[var(--border)] bg-[var(--bg-2)] flex items-center justify-center text-[10px] text-[var(--text-3)] text-center p-2 leading-tight">{isLegacy ? 'No preview (Legacy)' : 'Click to compare'}</div> : <img src={previewUrl} alt="Match" className="w-[140px] h-[95px] object-cover rounded-lg border border-[var(--border)] bg-[var(--bg-2)]" onError={(e) => { if (result.assetId && e.target.src !== `https://s3.veritrace.dpkvtrading.online/veritrace/${result.assetId}`) { e.target.src = `https://s3.veritrace.dpkvtrading.online/veritrace/${result.assetId}` } else { e.target.style.display = 'none' } }} />}
       </div>
@@ -432,14 +432,14 @@ function MatchCard({ result, onSelect, isEarliest }) {
         {result.creator && <div className="text-xs"><span className="text-[var(--text-3)]">Creator: </span><a href={`${ARBITRUM_SEPOLIA.explorer}/address/${result.creator}`} target="_blank" rel="noopener noreferrer" className="font-mono text-[var(--accent)] hover:opacity-80" onClick={(e) => e.stopPropagation()}>{result.creator.slice(0, 10)}...{result.creator.slice(-6)}</a></div>}
         {result.registeredAt && <div className="text-xs text-[var(--text-3)]">Registered: {result.registeredAt}</div>}
         <div className="flex flex-wrap items-center gap-2 mt-2">
-          {result.mediaS3Url && <a href={getGatewayUrl(result.mediaS3Url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-text, #4CAF50)]/10 hover:bg-[var(--success-text, #4CAF50)]/20 text-[var(--success-text, #4CAF50)] rounded-md text-[11px] font-bold border border-[var(--success-text, #4CAF50)]/20 transition-colors" onClick={(e) => e.stopPropagation()}><ExternalLink size={12} /> S3 Media</a>}
+          {result.mediaS3Url && <a href={getGatewayUrl(result.mediaS3Url)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--success-text)]/10 hover:bg-[var(--success-text)]/20 text-[var(--success-text)] rounded-md text-[11px] font-bold border border-[var(--success-text)]/20 transition-colors" onClick={(e) => e.stopPropagation()}><ExternalLink size={12} /> S3 Media</a>}
           {result.mediaIpfsUrl && <a href={getGatewayUrl(result.mediaIpfsUrl)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] rounded-md text-[11px] font-bold border border-[var(--accent)]/20 transition-colors" onClick={(e) => e.stopPropagation()}><ExternalLink size={12} /> IPFS Media</a>}
           {result.ipfsCid && <a href={`https://gateway.pinata.cloud/ipfs/${result.ipfsCid}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 bg-[var(--surface-3)] hover:bg-[var(--border)] text-[var(--text-2)] rounded-md text-[11px] font-bold border border-[var(--border)] transition-colors" onClick={(e) => e.stopPropagation()}><ExternalLink size={12} /> IPFS JSON</a>}
         </div>
       </div>
       <div className="flex items-center justify-center px-5 flex-shrink-0">
         <div className="text-center">
-          <div className="text-xl font-extrabold" style={{ color: isExact ? 'var(--success-text, #4CAF50)' : isDeepfake ? '#FF4D4D' : percentage >= 80 ? '#FF9B00' : 'var(--text-4)' }}>{percentage.toFixed(1)}%</div>
+          <div className="text-xl font-extrabold" style={{ color: isExact ? 'var(--success-text)' : isDeepfake ? 'var(--danger-text)' : percentage >= 80 ? 'var(--warning-text)' : 'var(--text-4)' }}>{percentage.toFixed(1)}%</div>
           <div className="text-[10px] uppercase tracking-wider text-[var(--text-3)]">match</div>
         </div>
       </div>

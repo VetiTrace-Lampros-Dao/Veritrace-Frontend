@@ -5,7 +5,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 export function HashDisplay({ label, hash, icon, variant = 'crypto', className }) {
   const colors = {
     crypto: { bg: 'bg-[var(--arb-bg)]', text: 'text-[var(--accent)]', label: 'SHA', tooltip: 'Cryptographic hash used for byte-for-byte exact matches on the blockchain.' },
-    perceptual: { bg: 'bg-[var(--success-bg)]', text: 'text-[var(--success-text, #4CAF50)]', label: 'pHash', tooltip: 'Perceptual hash used to find visually similar content and detect modifications.' },
+    perceptual: { bg: 'bg-[var(--success-bg)]', text: 'text-[var(--success-text)]', label: 'pHash', tooltip: 'Perceptual hash used to find visually similar content and detect modifications.' },
     semantic: { bg: 'bg-purple-500/15', text: 'text-purple-400', label: 'SEM', tooltip: 'Vision Transformer 64-dimensional semantic embedding vector for AI style and heatmap feature matching.' },
     face: { bg: 'bg-amber-500/15', text: 'text-amber-400', label: 'FACE', tooltip: 'ArcFace 128D/512D facial landmark geometry mesh for facial recognition and deepfake detection.' },
     audio: { bg: 'bg-blue-500/15', text: 'text-blue-400', label: 'AUD', tooltip: 'MFCC & wav2vec2 acoustic spectral vector for voice clone and audio deepfake detection.' },

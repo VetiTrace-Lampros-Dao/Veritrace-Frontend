@@ -60,7 +60,7 @@ function getGatewayUrl(url) {
 
 function fileTypeIcon(ipfsCid, aiTool) {
   if (aiTool?.toLowerCase().includes('video')) return <Video size={14} className="text-[var(--accent)]" />
-  if (aiTool?.toLowerCase().includes('pdf') || aiTool?.toLowerCase().includes('doc')) return <FileText size={14} className="text-[var(--success-text, #4CAF50)]" />
+  if (aiTool?.toLowerCase().includes('pdf') || aiTool?.toLowerCase().includes('doc')) return <FileText size={14} className="text-[var(--success-text)]" />
   return <ImageIcon size={14} className="text-violet-500" />
 }
 
@@ -159,7 +159,7 @@ function AssetRow({ item, index, onDownloadCert, onView, address }) {
           className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-3)] hover:text-[var(--text)] hover:bg-[var(--bg-2)] transition-all"
           title="Copy hash"
         >
-          {copied ? <Check size={13} className="text-[var(--success-text, #4CAF50)]" /> : <Copy size={13} />}
+          {copied ? <Check size={13} className="text-[var(--success-text)]" /> : <Copy size={13} />}
         </button>
         {item.txHash && (
           <a
@@ -181,7 +181,7 @@ function AssetRow({ item, index, onDownloadCert, onView, address }) {
         <button
           onClick={handleCert}
           disabled={downloading}
-          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-3)] hover:text-[var(--success-text, #4CAF50)] hover:bg-[var(--success-bg)] transition-all disabled:opacity-40"
+          className="w-7 h-7 rounded-lg flex items-center justify-center text-[var(--text-3)] hover:text-[var(--success-text)] hover:bg-[var(--success-bg)] transition-all disabled:opacity-40"
           title="Download certificate"
         >
           {downloading ? <Spinner size="xs" /> : <Download size={13} />}
@@ -449,7 +449,7 @@ export default function ProfilePage() {
 
   const stats = [
     { icon: Layers, label: 'Total Registrations', value: myUploads.length, color: 'var(--accent)' },
-    { icon: Award, label: 'Certificates Available', value: myUploads.length, color: 'var(--success-text, #4CAF50)' },
+    { icon: Award, label: 'Certificates Available', value: myUploads.length, color: 'var(--success-text)' },
     { icon: Clock, label: 'First Registration', value: myUploads.length ? formatTs(myUploads[myUploads.length - 1]?.timestamp) : '—', color: '#6366f1' },
     { icon: TrendingUp, label: 'On-Chain Records', value: registrations.length, color: '#f59e0b' },
   ]
@@ -516,7 +516,7 @@ export default function ProfilePage() {
                       placeholder="Display name…"
                       className="bg-[var(--bg-2)] border border-[var(--border-2)] rounded-xl px-3 py-1.5 text-sm text-[var(--text)] outline-none focus:border-[var(--accent)] w-full max-w-xs"
                     />
-                    <button onClick={saveName} className="w-7 h-7 rounded-lg bg-[var(--success-text, #4CAF50)]/15 text-[var(--success-text, #4CAF50)] flex items-center justify-center hover:bg-[var(--success-text, #4CAF50)]/25 transition-colors"><Save size={13} /></button>
+                    <button onClick={saveName} className="w-7 h-7 rounded-lg bg-[var(--success-text)]/15 text-[var(--success-text)] flex items-center justify-center hover:bg-[var(--success-text)]/25 transition-colors"><Save size={13} /></button>
                     <button onClick={() => setEditingName(false)} className="w-7 h-7 rounded-lg bg-[var(--bg-2)] text-[var(--text-3)] flex items-center justify-center hover:bg-[var(--bg-3)] transition-colors"><X size={13} /></button>
                   </div>
                 ) : (
@@ -544,7 +544,7 @@ export default function ProfilePage() {
               {/* Disconnect */}
               <button
                 onClick={() => disconnect()}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-[#FF6B6B] hover:bg-[var(--danger-bg)] transition-all border border-transparent hover:border-[var(--danger-border)] sm:self-start sm:mt-1"
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-medium text-[var(--danger-text)] hover:bg-[var(--danger-bg)] transition-all border border-transparent hover:border-[var(--danger-border)] sm:self-start sm:mt-1"
               >
                 <LogOut size={13} /> Disconnect
               </button>

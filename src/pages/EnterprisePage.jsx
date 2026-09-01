@@ -369,7 +369,7 @@ export default function EnterprisePage() {
                                   {datasetData.creators.map((c, idx) => (
                                     <div key={idx} className="flex justify-between items-center text-xs">
                                       <span className="font-mono text-[var(--text-2)]">{c.slice(0, 8)}...{c.slice(-6)}</span>
-                                      <span className="font-semibold text-[var(--success-text, #4CAF50)]">${(Number(datasetData.amounts[idx]) / 1000000).toFixed(2)}</span>
+                                      <span className="font-semibold text-[var(--success-text)]">${(Number(datasetData.amounts[idx]) / 1000000).toFixed(2)}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -379,7 +379,7 @@ export default function EnterprisePage() {
 
                           <div className="flex justify-between items-end mb-1">
                             <span className="text-[var(--text-3)] font-semibold">Total Cost</span>
-                            <span className="text-2xl font-bold text-[var(--success-text, #4CAF50)]">${(datasetData.total_usdc / 1000000).toFixed(2)} USDC</span>
+                            <span className="text-2xl font-bold text-[var(--success-text)]">${(datasetData.total_usdc / 1000000).toFixed(2)} USDC</span>
                           </div>
                         </div>
 
@@ -437,7 +437,7 @@ export default function EnterprisePage() {
 
                     {purchaseSuccess && (
                       <motion.div key="success" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-4">
-                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="w-14 h-14 rounded-full bg-[var(--success-bg)] text-[var(--success-text, #4CAF50)] flex items-center justify-center mx-auto mb-3">
+                        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.1, type: 'spring' }} className="w-14 h-14 rounded-full bg-[var(--success-bg)] text-[var(--success-text)] flex items-center justify-center mx-auto mb-3">
                           <CheckCircle2 size={28} />
                         </motion.div>
                         <div className="font-bold text-lg mb-1 text-[var(--text)]">Dataset Unlocked!</div>
@@ -452,7 +452,7 @@ export default function EnterprisePage() {
                           </div>
                           <div className="flex justify-between">
                             <span className="text-[var(--text-3)]">Items Access</span>
-                            <span className="font-bold text-[var(--success-text, #4CAF50)]">{datasetData.total_items} High-Res Files</span>
+                            <span className="font-bold text-[var(--success-text)]">{datasetData.total_items} High-Res Files</span>
                           </div>
                         </div>
 
@@ -609,7 +609,7 @@ export default function EnterprisePage() {
                             </div>
                             <div className="text-[9px] text-[var(--text-3)] flex items-center justify-between mt-1 border-t border-[var(--border)] pt-2">
                               <span>Verified: {new Date(pub.verified_at * 1000).toLocaleDateString()}</span>
-                              <span className="text-[var(--success-text, #4CAF50)] font-bold">✓ On-Chain Registry</span>
+                              <span className="text-[var(--success-text)] font-bold">✓ On-Chain Registry</span>
                             </div>
                           </div>
                         ))}

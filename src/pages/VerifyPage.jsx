@@ -309,14 +309,14 @@ export default function VerifyPage() {
               </CardTitle>
             </CardHeader>
             <CardBody className="flex flex-col gap-3 p-4 text-xs">
-              <div className="relative flex gap-3 p-3 rounded-xl border border-[var(--success-text, #4CAF50)]/20 bg-[var(--success-text, #4CAF50)]/5 transition-all hover:bg-[var(--success-text, #4CAF50)]/10">
-                <div className="flex-shrink-0 font-bold text-sm text-[var(--success-text, #4CAF50)] min-w-[36px] pt-0.5">
+              <div className="relative flex gap-3 p-3 rounded-xl border border-[var(--success-text)]/20 bg-[var(--success-text)]/5 transition-all hover:bg-[var(--success-text)]/10">
+                <div className="flex-shrink-0 font-bold text-sm text-[var(--success-text)] min-w-[36px] pt-0.5">
                   100%
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
                     Cryptographic Match
-                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--success-text, #4CAF50)] animate-pulse" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--success-text)] animate-pulse" />
                   </div>
                   <div className="text-[var(--text-3)] leading-relaxed text-[11px]">
                     Byte-level validation. The uploaded file is completely identical to the registered original.
@@ -324,14 +324,14 @@ export default function VerifyPage() {
                 </div>
               </div>
 
-              <div className="relative flex gap-3 p-3 rounded-xl border border-[#FF9B00]/20 bg-[#FF9B00]/5 transition-all hover:bg-[#FF9B00]/10">
-                <div className="flex-shrink-0 font-bold text-sm text-[#FF9B00] min-w-[36px] pt-0.5">
+              <div className="relative flex gap-3 p-3 rounded-xl border border-[var(--warning-text)]/20 bg-[var(--warning-text)]/5 transition-all hover:bg-[var(--warning-text)]/10">
+                <div className="flex-shrink-0 font-bold text-sm text-[var(--warning-text)] min-w-[36px] pt-0.5">
                   80%+
                 </div>
                 <div className="flex flex-col gap-0.5">
                   <div className="font-semibold text-[var(--text-1)] flex items-center gap-1.5">
                     Perceptual Match
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#FF9B00]" />
+                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--warning-text)]" />
                   </div>
                   <div className="text-[var(--text-3)] leading-relaxed text-[11px]">
                     Structural verification. The content matches closely, indicating potential cropping, resizing, or compression.
@@ -363,7 +363,7 @@ export default function VerifyPage() {
               <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className={`card-hover-glow ${blockchainRecord ? 'border-[var(--success-border)]' : ''}`}>
                   <CardHeader className={blockchainRecord ? 'bg-[var(--success-bg)]' : ''}>
-                    <CardTitle className={blockchainRecord ? 'text-[var(--success-text, #4CAF50)]' : ''}><Shield size={16} /> Immutable registry record</CardTitle>
+                    <CardTitle className={blockchainRecord ? 'text-[var(--success-text)]' : ''}><Shield size={16} /> Immutable registry record</CardTitle>
                     {blockchainRecord && <Badge variant="success">Proof located</Badge>}
                   </CardHeader>
                   <CardBody>
@@ -413,7 +413,7 @@ export default function VerifyPage() {
                       <div className="flex flex-col items-center py-4">
                         <div className="relative w-16 h-16 flex items-center justify-center mb-3">
                           <div className="loading-orb-outer absolute inset-0 rounded-full" style={{ border: '2.5px solid var(--border)', borderTopColor: 'var(--accent)', borderRightColor: 'var(--accent)' }} />
-                          <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text, #4CAF50)', borderLeftColor: 'var(--success-text, #4CAF50)' }} />
+                          <div className="loading-orb-inner absolute inset-1.5 rounded-full" style={{ border: '2.5px solid var(--border)', borderBottomColor: 'var(--success-text)', borderLeftColor: 'var(--success-text)' }} />
                           <ArbitrumLogo size={20} animated />
                         </div>
                         <div className="font-semibold text-sm text-[var(--text)]">Searching similarity index...</div>
