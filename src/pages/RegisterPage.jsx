@@ -164,6 +164,15 @@ export default function RegisterPage() {
       const mediaIpfsUrl = pinFileData.media_ipfs_url
       const mediaS3Url = pinFileData.media_s3_url
       const metadataPayload = {
+        name: `VeriTrace Proof: ${sha256Bytes32.slice(0, 12)}...`,
+        description: `Immutable provenance record registered via VeriTrace.\n\nSHA-256: ${sha256Bytes32}\nAI Generator: ${aiTool || 'None'}`,
+        image: mediaIpfsUrl?.includes('/ipfs/') ? `ipfs://${mediaIpfsUrl.split('/ipfs/')[1]}` : mediaIpfsUrl,
+        attributes: [
+          { trait_type: 'AI Generator', value: aiTool || 'None' },
+          { trait_type: 'Media Type', value: hashes.mediaType || 'image' },
+          { trait_type: 'Allows AI Training', value: allowAiTraining ? 'Yes' : 'No' }
+        ],
+        // VeriTrace custom fields
         sha256: sha256Bytes32, representative_phash: hashes.phash ? Number(hashes.phash) : 0,
         media_ipfs_url: mediaIpfsUrl, media_s3_url: mediaS3Url,
         allow_ai_training: allowAiTraining, webhook_url: webhookUrl, parent_sha256: '',
