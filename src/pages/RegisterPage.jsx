@@ -261,6 +261,23 @@ export default function RegisterPage() {
 
       setNftResult({ tokenId, txHash: nftTxHash })
       toast.success(`🎉 Provenance NFT #${tokenId} minted successfully!`)
+
+      try {
+        if (window.ethereum) {
+          await window.ethereum.request({
+            method: 'wallet_watchAsset',
+            params: {
+              type: 'ERC721',
+              options: {
+                address: CONTRACT_ADDRESS,
+                tokenId: tokenId.toString(),
+              },
+            },
+          })
+        }
+      } catch (watchErr) {
+        console.error('Failed to add NFT to wallet:', watchErr)
+      }
     } catch (err) {
       let msg = err.message
       if (msg.includes('NFTAlreadyMinted')) msg = 'An NFT has already been minted for this content.'
