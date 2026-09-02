@@ -280,6 +280,9 @@ export default function RegisterPage() {
               options: {
                 address: CONTRACT_ADDRESS,
                 tokenId: tokenId.toString(),
+                symbol: 'VTRC',
+                // Use the HTTPS S3 URL or IPFS gateway URL for reliable MetaMask rendering
+                image: txResult.mediaS3Url || (txResult.mediaIpfsUrl?.includes('/ipfs/') ? `https://gateway.pinata.cloud/ipfs/${txResult.mediaIpfsUrl.split('/ipfs/')[1]}` : txResult.mediaIpfsUrl),
               },
             },
           })
