@@ -163,10 +163,16 @@ export default function RegisterPage() {
       const pinFileData = await pinFileRes.json()
       const mediaIpfsUrl = pinFileData.media_ipfs_url
       const mediaS3Url = pinFileData.media_s3_url
+      // Determine correct preview image based on media type
+      const isImage = hashes.mediaType === 'image'
+      // Fallback logo if the content is video/audio/text, otherwise use the actual image via HTTPS gateway
+      const previewImageUrl = isImage ? mediaIpfsUrl : 'https://bafybeiemv7p2tng32a5j7o2mgsed4ifivs3l4wixgsh24b64n226sksrca.ipfs.w3s.link/veritrace-nft-placeholder.png'
+
       const metadataPayload = {
         name: `VeriTrace Proof: ${sha256Bytes32.slice(0, 12)}...`,
         description: `Immutable provenance record registered via VeriTrace.\n\nSHA-256: ${sha256Bytes32}\nAI Generator: ${aiTool || 'None'}`,
-        image: mediaIpfsUrl?.includes('/ipfs/') ? `ipfs://${mediaIpfsUrl.split('/ipfs/')[1]}` : mediaIpfsUrl,
+        image: previewImageUrl,
+        animation_url: mediaIpfsUrl, // OpenSea uses this for audio/video/html
         attributes: [
           { trait_type: 'AI Generator', value: aiTool || 'None' },
           { trait_type: 'Media Type', value: hashes.mediaType || 'image' },
@@ -282,7 +288,7 @@ export default function RegisterPage() {
                 tokenId: tokenId.toString(),
                 symbol: 'VTRC',
                 // Use the HTTPS S3 URL or IPFS gateway URL for reliable MetaMask rendering
-                image: txResult.mediaS3Url || (txResult.mediaIpfsUrl?.includes('/ipfs/') ? `https://gateway.pinata.cloud/ipfs/${txResult.mediaIpfsUrl.split('/ipfs/')[1]}` : txResult.mediaIpfsUrl),
+                image: (hashes?.mediaType === 'image') ? (txResult.mediaS3Url || txResult.mediaIpfsUrl) : 'https://bafybeiemv7p2tng32a5j7o2mgsed4ifivs3l4wixgsh24b64n226sksrca.ipfs.w3s.link/veritrace-nft-placeholder.png',
               },
             },
           })
