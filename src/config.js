@@ -40,9 +40,9 @@ export const RAG_BOT_API = import.meta.env.VITE_RAG_BOT_API || 'https://rag-bot-
 /**
  * Deployed VeritraceRegistry Stylus contract address.
  * Written in Rust, compiled to WASM, deployed on Arbitrum Sepolia.
- * Explorer: https://sepolia.arbiscan.io/address/0xeb09ca3b844693817479cf33fd88cdf02c2711fd
+ * Explorer: https://sepolia.arbiscan.io/address/0xa7bcdc220f17ebcb41a2ddded82c0317a9954c48
  */
-export const CONTRACT_ADDRESS = '0xeb09ca3b844693817479cf33fd88cdf02c2711fd';
+export const CONTRACT_ADDRESS = '0xa7bcdc220f17ebcb41a2ddded82c0317a9954c48';
 
 /**
  * ABI for the VeritraceRegistry contract.
@@ -77,11 +77,38 @@ export const CONTRACT_ABI = [
   // ── Read function: Check if publisher is verified ──
   'function isVerifiedPublisher(address publisher) view returns (string orgName, bool isVerified)',
 
+  // ── ERC-721: Mint a Provenance NFT for registered content ──
+  // Only the original creator can call. Returns the new token ID.
+  'function mintProvenanceNft(bytes32 sha256hash) returns (uint256 tokenId)',
+
+  // ── ERC-721: Read functions ──
+  'function ownerOf(uint256 tokenId) view returns (address owner)',
+  'function balanceOf(address owner) view returns (uint256 balance)',
+  'function tokenUri(uint256 tokenId) view returns (string uri)',
+  'function getTokenByContent(bytes32 sha256hash) view returns (uint256 tokenId)',
+  'function totalSupply() view returns (uint256 total)',
+  'function getApproved(uint256 tokenId) view returns (address approved)',
+  'function isApprovedForAll(address owner, address operator) view returns (bool approved)',
+  'function supportsInterface(uint32 interfaceId) view returns (bool)',
+
+  // ── ERC-721: Write functions ──
+  'function approve(address to, uint256 tokenId)',
+  'function setApprovalForAll(address operator, bool approved)',
+  'function transferFrom(address from, address to, uint256 tokenId)',
+
   // ── Event: Emitted when content is registered ──
   'event ContentRegistered(bytes32 indexed sha256hash, address indexed creator, uint64 phash, uint64 timestamp, string ipfsCid, string aitool, bool allowAiTraining)',
 
   // ── Event: Emitted when dataset is purchased ──
   'event DatasetPurchased(address indexed buyer, uint256 totalUsdc)',
+
+  // ── ERC-721 standard events ──
+  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+  'event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId)',
+  'event ApprovalForAll(address indexed owner, address indexed operator, bool approved)',
+
+  // ── Provenance NFT minted event ──
+  'event ProvenanceNFTMinted(uint256 indexed tokenId, address indexed creator, bytes32 indexed sha256Hash, string ipfsCid)',
 
   // ── Error types ──
   'error ContentAlreadyRegistered(bytes32 sha256hash)',

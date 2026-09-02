@@ -171,7 +171,7 @@ You can configure the help widget's API endpoint:
 ### Connected Endpoints (Production Fallbacks)
 * **Hash Engine API**: `https://api.hash.veritrace.dpkvtrading.online` (Go, BoltDB feature extraction)
 * **Core Backend API**: `https://api.veritrace.dpkvtrading.online` (PG, Redis, Qdrant orchestration)
-* **Smart Contract Address**: `0xeb09ca3b844693817479cf33fd88cdf02c2711fd` (Arbitrum Sepolia Testnet)
+* **Smart Contract Address**: `0xa7bcdc220f17ebcb41a2ddded82c0317a9954c48` (Arbitrum Sepolia Testnet)
 
 ---
 
