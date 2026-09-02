@@ -287,8 +287,9 @@ export default function RegisterPage() {
                 address: CONTRACT_ADDRESS,
                 tokenId: tokenId.toString(),
                 symbol: 'VTRC',
-                // Use the HTTPS S3 URL or IPFS gateway URL for reliable MetaMask rendering
-                image: (hashes?.mediaType === 'image') ? (txResult.mediaS3Url || txResult.mediaIpfsUrl) : 'https://bafybeiemv7p2tng32a5j7o2mgsed4ifivs3l4wixgsh24b64n226sksrca.ipfs.w3s.link/veritrace-nft-placeholder.png',
+                // Always use a static logo for the MetaMask token icon prompt
+                // MetaMask enforces a strict < 512KB limit for token logos. User uploads (like a 2.5MB PNG) will result in a broken image icon.
+                image: 'https://bafybeiemv7p2tng32a5j7o2mgsed4ifivs3l4wixgsh24b64n226sksrca.ipfs.w3s.link/veritrace-nft-placeholder.png',
               },
             },
           })
